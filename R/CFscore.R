@@ -61,6 +61,7 @@ library(survival)
 #' @details auc is area under the (ROC) curve, estimated ...
 #'
 #'   Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
+#'   scaled brier score is also possible (metric = "scaled_brier")
 #'
 #'   oeratio represents the observed/expected ratio, where
 #'   observed is the mean of the outcomes in the pseudopopulation.
@@ -90,7 +91,7 @@ library(survival)
 
 CFscore <- function(object, data, outcome_formula, treatment_formula,
                     treatment_of_interest,
-                    metrics = c("auc", "brier", "scaled_brier", "oeratio", "calplot"),
+                    metrics = c("auc", "brier", "oeratio", "calplot"),
                     time_horizon, cens.model = "cox",
                     null.model = TRUE, stable_iptw = FALSE,
                     bootstrap = 0, bootstrap_progress = TRUE,

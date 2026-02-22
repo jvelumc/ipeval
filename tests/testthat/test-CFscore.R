@@ -588,7 +588,8 @@ test_that("null model binary outcome", {
 
   nullmodel <- glm(Y0 ~ 1, data = data)
 
-  cfscore <- CFscore(model, data, Y ~ 1, A ~ L, 0,null.model = TRUE)
+  cfscore <- CFscore(model, data, Y ~ 1, A ~ L, 0,
+                     metrics = c("brier", "scaled_brier"), null.model = TRUE)
   expect_equal(
     unname(nullmodel$coefficients[1]),
     cfscore$predictions$`null model`[[1]],
