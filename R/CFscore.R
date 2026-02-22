@@ -156,7 +156,7 @@ CFscore <- function(object, data, outcome_formula, treatment_formula,
 
   # get iptw
   cfscore$ipt$method = "weights manually specified"
-  if (!missing(treatment_formula)) {
+  if (missing(iptw)) {
     cfscore$ipt$method <- "binomial glm"
     cfscore$ipt$confounders <- all.vars(treatment_formula)[-1]
     cfscore$ipt$propensity_formula <- treatment_formula
@@ -172,7 +172,6 @@ CFscore <- function(object, data, outcome_formula, treatment_formula,
     }
   }
   cfscore$ipt$weights <- iptw
-
   # get ipcw
   if (cfscore$outcome_type == "survival") {
     cfscore$ipc$method <- "weights manually specified"
