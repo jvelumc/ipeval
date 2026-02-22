@@ -90,7 +90,7 @@ library(survival)
 
 CFscore <- function(object, data, outcome_formula, treatment_formula,
                     treatment_of_interest,
-                    metrics = c("auc", "brier", "oeratio", "calplot"),
+                    metrics = c("auc", "brier", "scaled_brier", "oeratio", "calplot"),
                     time_horizon, cens.model = "cox",
                     null.model = TRUE, stable_iptw = FALSE,
                     bootstrap = 0, bootstrap_progress = TRUE,
@@ -247,7 +247,8 @@ get_metrics <- function(cfscore) {
             obs_trt = cfscore$observed_treatment,
             cf_pred = x,
             cf_trt = cfscore$treatment_of_interest,
-            ipw = cfscore$ipt$weights * cfscore$ipc$weights
+            ipw = cfscore$ipt$weights * cfscore$ipc$weights,
+            nullpred = cfscore$predictions[["null model"]]
           )
         }
       )
@@ -263,7 +264,8 @@ get_metrics <- function(cfscore) {
             obs_trt = cfscore$observed_treatment,
             cf_pred = x,
             cf_trt = cfscore$treatment_of_interest,
-            ipw = cfscore$ipt$weights
+            ipw = cfscore$ipt$weights,
+            nullpred = cfscore$predictions[["null model"]]
           )
         }
       )

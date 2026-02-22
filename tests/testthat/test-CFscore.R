@@ -594,6 +594,18 @@ test_that("null model binary outcome", {
     cfscore$predictions$`null model`[[1]],
     tolerance = 0.01
   )
+
+  # scaled brier score of null model is 0
+  expect_equal(
+    cfscore$score$scaled_brier[[1]],
+    0
+  )
+
+  # scaled brier score of model is correct
+  expect_equal(
+    (1 - cfscore$score$brier[[2]]/cfscore$score$brier[[1]])*100,
+    cfscore$score$scaled_brier[[2]]
+  )
 })
 
 test_that("null model survival outcome", {

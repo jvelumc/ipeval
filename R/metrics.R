@@ -2,6 +2,7 @@
 cf_metric <- function(metric, ...) {
   switch (metric,
     "brier" = cf_brier(...),
+    "scaled_brier" = cf_brier_scaled(...),
     "auc" = cf_auc(...),
     "oeratio" = cf_oeratio(...),
     "oeratio_pp" = cf_oeratio_pp(...),
@@ -12,7 +13,7 @@ cf_metric <- function(metric, ...) {
 
 # Brier
 
-cf_brier <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
+cf_brier <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
 
   # indices of persons that follow the trt of interest
   pseudo_i <- obs_trt == cf_trt
@@ -24,9 +25,18 @@ cf_brier <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
     )
 }
 
+cf_brier_scaled <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, nullpred, ...) {
+
+  brier <- cf_brier(obs_outcome, obs_trt, cf_pred, cf_trt, ipw)
+  brier_null <- cf_brier(obs_outcome, obs_trt, nullpred, cf_trt, ipw)
+
+  (1 - brier/brier_null)*100
+
+}
+
 # AUC
 
-cf_auc <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
+cf_auc <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
 
   # indices of persons that follow the trt of interest
   pseudo_i <- obs_trt == cf_trt
@@ -65,7 +75,7 @@ cf_auc <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
 # calibration
 
 # # oe ratio
-cf_oeratio <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
+cf_oeratio <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
 
   # indices of persons that follow the trt of interest
   pseudo_i <- obs_trt == cf_trt
@@ -80,7 +90,7 @@ cf_oeratio <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
   return(observed/expected)
 }
 
-cf_oeratio_pp <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
+cf_oeratio_pp <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
 
   # indices of persons that follow the trt of interest
   pseudo_i <- obs_trt == cf_trt
@@ -100,7 +110,7 @@ cf_oeratio_pp <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
 
 # # calibration plot
 
-cf_calplot <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw) {
+cf_calplot <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
 
   # it does not make sense to split the data into more groups than there is
   # unique data. E.g. for the null model, we want one group, not 8.
