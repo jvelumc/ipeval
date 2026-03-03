@@ -38,7 +38,10 @@ check_missing_xor <- function(arg1, arg2) {
   }
 }
 
-
+check_input <- function(arg, class, mandatory = TRUE) {
+  # check if arg is of type class, and
+  # if mandatory = TRUE check if its not missing
+}
 
 
 

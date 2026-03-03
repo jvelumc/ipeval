@@ -103,6 +103,13 @@ CFscore <- function(object, data, outcome_formula, treatment_formula,
   check_missing(treatment_formula)
   check_missing(treatment_of_interest)
 
+  metrics <- match.arg(
+    arg = metrics,
+    choices = c("auc", "brier", "scaled_brier", "oeratio", "calplot"),
+    several.ok = TRUE
+  )
+  cens.model <- match.arg(cens.model, choices = c("cox", "KM"))
+
   # assert treatment is binary
   # assert non-surival outcome is binary
   # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights)

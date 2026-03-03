@@ -19,8 +19,7 @@ CFscore(
   outcome_formula = Y ~ 1,
   treatment_formula = A ~ L,
   treatment_of_interest = 0,
-  metrics = c("oeratio"),
-  null.model = FALSE
+  metrics = c("oeratio", "brier", "brier")
 )
 
 CFscore(
