@@ -1,8 +1,9 @@
 ipc_weights <- function(data, formula, type, time_horizon) {
 
 
-  if (type == "KM")
-    stopifnot(rhs_is_one(formula))
+  # TODO: doesnt work for ~ 1
+  # if (type == "KM")
+  #   stopifnot(rhs_is_one(formula))
 
   mf <- model.frame(formula, data)
   y <- model.response(mf)

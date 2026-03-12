@@ -38,9 +38,15 @@ check_missing_xor <- function(arg1, arg2) {
   }
 }
 
-check_input <- function(arg, class, mandatory = TRUE) {
-  # check if arg is of type class, and
-  # if mandatory = TRUE check if its not missing
+check_input <- function(arg, class) {
+  # check if arg is of type class
+  if (!inherits(arg, class)) {
+    stop(
+      sprintf("%s must be of class '%s'.", class),
+      call. = FALSE
+    )
+  }
+
 }
 
 

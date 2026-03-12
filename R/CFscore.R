@@ -89,17 +89,17 @@ library(survival)
 #'   treatment_of_interest = 0,
 #' )
 
-CFscore <- function(object, data, outcome_formula, treatment_formula,
+CFscore <- function(object, data, outcome, treatment_formula,
                     treatment_of_interest,
                     metrics = c("auc", "brier", "oeratio", "calplot"),
-                    time_horizon, cens.model = "cox",
+                    time_horizon, cens.model = "cox", cens_formula = ~ 1,
                     null.model = TRUE, stable_iptw = FALSE,
                     bootstrap = 0, bootstrap_progress = TRUE,
                     iptw, ipcw, quiet = FALSE) {
 
   check_missing(object)
   check_missing(data)
-  check_missing(outcome_formula)
+  check_missing(outcome)
   check_missing(treatment_formula)
   check_missing(treatment_of_interest)
 
@@ -124,7 +124,7 @@ CFscore <- function(object, data, outcome_formula, treatment_formula,
   cfscore <- list()
 
   # get the observed outcome
-  cfscore$outcome <- extract_lhs(data, outcome_formula)
+  cfscore$outcome <- extract_outcome(data, substitute(outcome))
   if (inherits(cfscore$outcome, "Surv")) {
     cfscore$outcome_type <- "survival"
     cfscore$time_horizon <- time_horizon
@@ -184,7 +184,8 @@ CFscore <- function(object, data, outcome_formula, treatment_formula,
     cfscore$ipc$method <- "weights manually specified"
     if (missing(ipcw)) {
       cfscore$ipc$method <- cens.model
-      cfscore$ipc$cens.formula <- outcome_formula
+      cfscore$ipc$cens.formula <- cens_formula # TODO
+      return(cfscore)
       ipc <- ipc_weights(data, outcome_formula, cens.model, time_horizon)
       ipcw <- ipc$weights
       cfscore$ipc$model <- ipc$model
@@ -300,4 +301,43 @@ make_list_if_not_list <- function(x) {
     x <- list(x)
   names(x) <- name_unnamed_list(x)
   x
+}
+
+extract_outcome <- function(data, outcome) {
+  # attempt to extract the outcome from the data, and perform various sanity
+  # checks
+
+  y <- tryCatch(
+    eval(outcome, envir = data),
+    error = function(e) {
+      stop(sprintf("Outcome %s not found in data", deparse(outcome)), call. = FALSE)
+    }
+  )
+
+  if (!( (is.numeric(y) && is.vector(y)) || inherits(y, "Surv") )) {
+    stop("Outcome must be a numeric vector or a Surv object", call. = FALSE)
+  }
+
+  if (length(y) != nrow(data)) {
+    stop("Outcome must be of length nrow(data)", call. = FALSE)
+  }
+
+  if (inherits(y, "Surv")) {
+    time  <- y[, 1]
+    event <- y[, 2]
+
+    if (any(!is.finite(time)) || any(time <= 0)) {
+      stop("Survival times must be positive", call. = FALSE)
+    }
+
+    if (!all(event %in% c(0, 1))) {
+      stop("Event indicator must be binary (0/1)", call. = FALSE)
+    }
+  } else {
+    if (!all(y %in% c(0, 1))) {
+      stop("Outcome must be binary (0/1)", call. = FALSE)
+    }
+  }
+
+  y
 }
