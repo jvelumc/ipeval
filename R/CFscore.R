@@ -11,12 +11,8 @@ library(survival)
 #' }
 #' @param data A data.frame containing at least the observed outcome, assigned
 #'   treatment, and necessary confounders for the validation of object.
-#' @param outcome_formula A formula which identifies the outcome (left hand
-#'   side). E.g. Y ~ 1 for binary and Surv(time, status) ~ 1 for time-to-event
-#'   outcomes. In right censored data, the right hand side of the formula is
-#'   used to estimate the inverse probability of censoring weights (IPCW) model.
-#'   Alternatively, the IPCW can also be specified themselves using the ipcw
-#'   argument, in which case the right hand side of this formula is ignored.
+#' @param outcome The outcome, as evaluated within data. E.g. Y for binary
+#'   and Surv(time, status) for time-to-event outcomes.
 #' @param treatment_formula A formula which identifies the treatment (left hand
 #'   side). E.g. A ~ 1. The right hand side of the formula can be used to
 #'   specify the confounders used to estimate the inverse probability of
@@ -27,8 +23,7 @@ library(survival)
 #' @param treatment_of_interest A treatment level for which the counterfactual
 #'   perormance measures should be evaluated.
 #' @param metrics A character vector specifying which performance metrics to be
-#'   computed. Options are c("auc", "brier", "oeratio",
-#'   "calplot"). See details.
+#'   computed. Options are c("auc", "brier", "oeratio", "calplot"). See details.
 #' @param time_horizon For time to event data, the prediction horizon of
 #'   interest.
 #' @param cens.model Model for estimating inverse probability of censoring
@@ -63,10 +58,9 @@ library(survival)
 #'   Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
 #'   scaled brier score is also possible (metric = "scaled_brier")
 #'
-#'   oeratio represents the observed/expected ratio, where
-#'   observed is the mean of the outcomes in the pseudopopulation.
-#'   The expected is the mean of the predictions in the original observed
-#'   population.
+#'   oeratio represents the observed/expected ratio, where observed is the mean
+#'   of the outcomes in the pseudopopulation. The expected is the mean of the
+#'   predictions in the original observed population.
 #'
 #' @export
 #'
@@ -84,7 +78,7 @@ library(survival)
 #' CFscore(
 #'   object = list("ran" = random, "mod" = model, "per" = naive_perfect),
 #'   data = data,
-#'   outcome_formula = Y ~ 1,
+#'   outcome = Y,
 #'   treatment_formula = A ~ L,
 #'   treatment_of_interest = 0,
 #' )
@@ -92,7 +86,7 @@ library(survival)
 CFscore <- function(object, data, outcome, treatment_formula,
                     treatment_of_interest,
                     metrics = c("auc", "brier", "oeratio", "calplot"),
-                    time_horizon, cens.model = "cox", cens_formula = ~ 1,
+                    time_horizon, cens.model = "KM", cens_formula = ~ 1,
                     null.model = TRUE, stable_iptw = FALSE,
                     bootstrap = 0, bootstrap_progress = TRUE,
                     iptw, ipcw, quiet = FALSE) {
@@ -110,8 +104,9 @@ CFscore <- function(object, data, outcome, treatment_formula,
   )
   cens.model <- match.arg(cens.model, choices = c("cox", "KM"))
 
-  # assert treatment is binary assert non-surival outcome is binary assert
-  # rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights) handle
+  # assert treatment is binary
+  # assert non-surival outcome is binary
+  # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights) handle
   # formulas in general (lhs is 1 term, ...) assert longest surv time is longer
   # than time horizon, to avoid annoying weights
 
@@ -335,8 +330,8 @@ extract_outcome <- function(data, outcome) {
     time  <- y[, 1]
     event <- y[, 2]
 
-    if (any(!is.finite(time)) || any(time <= 0)) {
-      stop("Survival times must be positive", call. = FALSE)
+    if (any(!is.finite(time)) || any(time < 0)) {
+      stop("Survival times must be finite & nonnegative", call. = FALSE)
     }
 
     if (!all(event %in% c(0, 1))) {
