@@ -1,3 +1,11 @@
+flip_surv_event <- function(formula) {
+  lhs <- formula[[2]]
+
+  lhs[[3]] <- call("!", lhs[[3]])   # negate event indicator
+  formula[[2]] <- lhs
+  formula
+}
+
 ipc_weights <- function(data, formula, type, time_horizon) {
 
 
@@ -6,8 +14,6 @@ ipc_weights <- function(data, formula, type, time_horizon) {
 
   mf <- model.frame(formula, data)
   y <- model.response(mf)
-
-
 
   p_uncensored <- switch(
     type,
@@ -21,18 +27,13 @@ ipc_weights <- function(data, formula, type, time_horizon) {
     },
     cox = {
       # coxph has no reverse argument, need to flip it manually
-      if ("cfscore_time" %in% colnames(mf) || "cfscore_status" %in% colnames(mf)) {
-        stop("Please don't use the variable names cfscore_time or cfscore_status in your data")
-      }
-      mf$cfscore_time <- y[, "time"]
-      mf$cfscore_status <- y[, "status"]
 
-      flipped_form <- update.formula(formula, Surv(cfscore_time, cfscore_status == 0) ~ .)
+      flipped_form <- flip_surv_event(formula)
 
-      fit <- coxph(flipped_form, data = mf, model = TRUE, x = TRUE)
+      fit <- coxph(flipped_form, data = data, model = TRUE, x = TRUE)
       list(
         model = fit,
-        probability = 1-predict_cox(fit, mf, pmin(time_horizon, mf$cfscore_time))
+        probability = 1-predict_cox(fit, data, pmin(y[, "time"], time_horizon))
       )
     },
     stop("cens.model ", type, " not implemented")

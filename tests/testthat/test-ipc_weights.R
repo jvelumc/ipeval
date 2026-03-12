@@ -61,11 +61,6 @@ test_that("ipc KM simple correct", {
     status = c(0,1,0)
   )
 
-  expect_error(
-    ipc_weights(data, survival::Surv(time, status) ~ cfscore_time,
-                type = "cox", time_horizon = 0.5),
-    regexp = "Please don't use the variable names cfscore_time"
-  )
 })
 
 # tests with some survival ties (one has outcome, one is censor at same t)
