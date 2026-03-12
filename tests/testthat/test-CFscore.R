@@ -150,6 +150,7 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, uncensored", {
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "KM",
+    cens_formula = ~ 1,
     null.model = FALSE
   )
 
@@ -199,22 +200,24 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, censor at T", {
   cfscore_km <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "KM",
+    cens_formula = ~ 1,
     null.model = FALSE
   )
 
   cfscore_cox <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "cox",
+    cens_formula = ~ 1,
     null.model = FALSE
   )
 
@@ -284,6 +287,7 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor", {
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "KM",
+    cens_formula = ~ 1,
     null.model = FALSE
   )
 
@@ -305,11 +309,12 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor", {
   cfscore1 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 1,
     time_horizon = horizon,
     cens.model = "KM",
+    cens_formula = ~ 1,
     null.model = FALSE
   )
 
@@ -362,11 +367,12 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, cox censor", {
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ L + P + A,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "cox",
+    cens_formula = ~ L + P + A,
     null.model = FALSE
   )
 
@@ -401,10 +407,6 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor, stab
   data$time_uncensored <- ifelse(data$A == 1, data$time1, data$time0)
   data$status_uncensored <- 1
 
-  summary(data$time0)
-  summary(data$time1)
-  summary(data$censortime)
-
   data$status <- ifelse(data$time_uncensored <= data$censortime, TRUE, FALSE)
   data$time <- ifelse(data$status == TRUE,
                       data$time_uncensored,
@@ -418,11 +420,12 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor, stab
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "KM",
+    cens_formula = ~ 1,
     stable_iptw = TRUE,
     null.model = FALSE
   )
@@ -433,11 +436,12 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor, stab
   cfscore_unstable <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
     cens.model = "KM",
+    cens_formula = ~ 1,
     stable_iptw = FALSE,
     null.model = FALSE
   )
@@ -490,7 +494,7 @@ test_that("results are in between lower & upper bootstrap", {
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Y ~ 1,
+    outcome = Y,
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     bootstrap = 200,
@@ -541,11 +545,12 @@ test_that("results are in between lower & upper bootstrap, surv, cox censor", {
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ L + P + A,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     cens.model = "cox",
     time_horizon = horizon,
+    cens_formula = ~ L + P + A,
     bootstrap = 100,
     null.model = FALSE
   )
@@ -588,7 +593,7 @@ test_that("null model binary outcome", {
 
   nullmodel <- glm(Y0 ~ 1, data = data)
 
-  cfscore <- CFscore(model, data, Y ~ 1, A ~ L, 0,
+  cfscore <- CFscore(model, data, Y, A ~ L, 0,
                      metrics = c("brier", "scaled_brier"), null.model = TRUE)
   expect_equal(
     unname(nullmodel$coefficients[1]),
@@ -642,11 +647,12 @@ test_that("null model survival outcome", {
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ L + P + A,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     metrics = c(),
     cens.model = "cox",
+    cens_formula = ~ L + P + A,
     time_horizon = horizon,
     null.model = TRUE
   )
@@ -689,44 +695,48 @@ test_that("CFscore handles horizon on censor time correctly", {
   cfscore_km999 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 9.999,
     cens.model = "KM",
+    cens_formula = ~ 1,
     null.model = TRUE
   )
 
   cfscore_km10 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 10,
     cens.model = "KM",
+    cens_formula = ~ 1,
     null.model = TRUE
   )
 
   cfscore_cox999 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 9.999,
     cens.model = "cox",
+    cens_formula = ~ 1,
     null.model = TRUE
   )
 
   cfscore_cox10 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status) ~ 1,
+    outcome = Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 10,
     cens.model = "cox",
+    cens_formula = ~ 1,
     null.model = TRUE
   )
 

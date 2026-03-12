@@ -4,6 +4,7 @@ data <- data.frame(id = 1:n)
 data$L <- rnorm(n)
 data$A <- rbinom(n, 1, plogis(2*data$L))
 data$P <- rnorm(n)
+data$Z <- runif(n)
 data$Y0 <- rbinom(n, 1, plogis(0.5 + data$L + 1.25 * data$P))
 data$Y1 <- rbinom(n, 1, plogis(0.5 + data$L + 1.25 * data$P - 0.9*data$A))
 data$Y <- ifelse(data$A == 1, data$Y1, data$Y0)
@@ -18,28 +19,34 @@ causal_model <- glm(Y ~ A + P, family = "binomial", data = data, weights = iptw)
 
 
 
-cfscore
 
 
 
 
 
 
-
-
-cf2 <- function(data, outcome, cens_formula) {
+cf <- function(data, outcome, cens_formula) {
 
   check_missing(outcome)
   y <- extract_outcome(data, substitute(outcome))
-  o <- substitute(outcome)
-  formula(o ~ cens_formula[[2]])
 
+  f <- update.formula(
+    old = cens_formula,
+    new = substitute(outcome ~ ., list(outcome = substitute(outcome)))
+  )
+
+  ipt_weights(data, f)
 }
 
-cf2(data, Surv(L, A), ~ P)
 
-# Z <- data$Y
-# cf2(causal_model, data, outcome = )
+
+
+cf(data, A, ~ L)
+
+
+
+
+
 
 
 cf <- CFscore(

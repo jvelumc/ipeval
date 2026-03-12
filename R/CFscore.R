@@ -110,11 +110,10 @@ CFscore <- function(object, data, outcome, treatment_formula,
   )
   cens.model <- match.arg(cens.model, choices = c("cox", "KM"))
 
-  # assert treatment is binary
-  # assert non-surival outcome is binary
-  # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights)
-  # handle formulas in general (lhs is 1 term, ...)
-  # assert longest surv time is longer than time horizon, to avoid annoying weights
+  # assert treatment is binary assert non-surival outcome is binary assert
+  # rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights) handle
+  # formulas in general (lhs is 1 term, ...) assert longest surv time is longer
+  # than time horizon, to avoid annoying weights
 
   if (bootstrap != 0)
     stopifnot("can't bootstrap if iptw are given" = missing(iptw))
@@ -184,9 +183,15 @@ CFscore <- function(object, data, outcome, treatment_formula,
     cfscore$ipc$method <- "weights manually specified"
     if (missing(ipcw)) {
       cfscore$ipc$method <- cens.model
-      cfscore$ipc$cens.formula <- cens_formula # TODO
-      return(cfscore)
-      ipc <- ipc_weights(data, outcome_formula, cens.model, time_horizon)
+
+      # annoying code to combine the Surv object from the outcome with the given
+      # r.h.s. of the cens_formula
+      cfscore$ipc$cens_formula <- update.formula(
+        old = cens_formula,
+        new = substitute(outcome ~ ., list(outcome = substitute(outcome)))
+      )
+      ipc <- ipc_weights(data, cfscore$ipc$cens_formula,
+                         cens.model, time_horizon)
       ipcw <- ipc$weights
       cfscore$ipc$model <- ipc$model
 
@@ -218,7 +223,10 @@ CFscore <- function(object, data, outcome, treatment_formula,
 
       null_preds <- rep(null_model, nrow(data))
     }
-    cfscore$predictions <- c(list("null model" = null_preds), cfscore$predictions)
+    cfscore$predictions <- c(
+      list("null model" = null_preds),
+      cfscore$predictions
+    )
   }
 
 
@@ -310,7 +318,8 @@ extract_outcome <- function(data, outcome) {
   y <- tryCatch(
     eval(outcome, envir = data),
     error = function(e) {
-      stop(sprintf("Outcome %s not found in data", deparse(outcome)), call. = FALSE)
+      stop(sprintf("Outcome %s not found in data", deparse(outcome)),
+           call. = FALSE)
     }
   )
 
