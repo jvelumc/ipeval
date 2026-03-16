@@ -4,16 +4,17 @@ output:
   pdf_document:
     keep_tex: true
 ---
+# CFeval: an R package for validating predictions under interventions
+
+# Abstract
+We describe the R package CFeval for evaluating performance of predictions under interventions in observational datasets in which not everyone received the intervention of interest. This package can currently be used for binary and time-to-event outcomes with binary (point) interventions.
 
 # Introduction
 
-Some prediction models estimate subjects risk under a certain treatment option. Predictions of these kind are called predictions under interventions. 
+Some prediction models estimate subjects risk under certain intervention options. Predictions of these kind are called predictions under interventions. In the following, the terms treatment and intervention are used interchangeable. 
+Validating the performance of such predictions is important. They may be used for medical decision making, thus accuracy is required. However, in observational datasets, this may prove to be challenging, as some patients may have received treatment, whereas others have not. For example, for treated patients, we can not directly compare a patients risk under no treatment to the outcome they would have observed if they were to have been untreated. This unobserved outcome is called their counterfactual outcome in causal inference literature. 
 
-Some models produce predictions under interventions for only one specific treatment option, e.g., untreated risk. Other models, like SMART2, are capable of predicting risk for both taking antithrombotics and not taking this drug, by including this variable as a predictor in the model. 
-
-Validating the performance of such models is important. They may be used for medical decision making, thus accuracy is required. However, difficult, as in observational datasets, some patients may have received treatment, whereas others have not. For example, for treated patients, we can not directly compare a patients untreated risk to the outcome they would have observed if they were to have been untreated. This unobserved outcome is called their counterfactual outcome. 
-
-For models that predict risk under interventions, validating the observed outcomes to the risk of the corresponding realized treatment may not be enough IN SOME OBSERVATIONAL DATASET. If models are used to assist in treatment decision, then it is important that the risks estimated under all intervention options are validated for all patients, irrespective of what treatment they were assigned in the real world. Validating only the risks of the realized treatment may lead to inaccurate performance estimates.
+For models that predict risk under interventions, validating the observed outcomes to the risk of the corresponding realized treatment may not be enough. If models are used to assist in treatment decision, then it is important that the risks estimated under all intervention options are validated for all patients, irrespective of what treatment they were assigned in the real world. Validating only the risks of the realized treatment may lead to inaccurate performance estimates.
 
 Treatment assignment may be confounded
 
@@ -27,8 +28,7 @@ To estimate the performance of predictions under a certain intervention in an ob
 
 This requires assumptions of consistency, sequential exchangeability, ... 
 
-## Metrics
-Various performance metrics. AUC, Brier score, calibration. Misschien weglaten i.v.m. lengte. 
+This R packages supports the following performance metrics: Area under the Receiver Operating Curve (AUC), Brier score, observed/expected (O/E) ratio and calibration plot. More details are given elsewhere. 
 
 # Package usage
 
@@ -127,7 +127,7 @@ CFscore(
     "causal" = model_causal
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0,
   null.model = FALSE
