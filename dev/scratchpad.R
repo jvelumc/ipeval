@@ -13,14 +13,42 @@ propensity_score <- predict(trt_model, type = "response")
 data$iptw <- 1 / ifelse(data$A == 1, propensity_score, 1 - propensity_score)
 causal_model <- glm(Y ~ A + P, family = "binomial", data = data, weights = iptw)
 
-CFscore(
+
+
+
+
+
+cfscore
+
+
+
+
+
+
+
+
+cf2 <- function(data, outcome, cens_formula) {
+
+  check_missing(outcome)
+  y <- extract_outcome(data, substitute(outcome))
+  o <- substitute(outcome)
+  formula(o ~ cens_formula[[2]])
+
+}
+
+cf2(data, Surv(L, A), ~ P)
+
+# Z <- data$Y
+# cf2(causal_model, data, outcome = )
+
+
+cf <- CFscore(
   object = causal_model,
   data = data,
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L,
   treatment_of_interest = 0,
-  metrics = c("oeratio"),
-  null.model = FALSE
+  metrics = c("oeratio", "brier", "brier")
 )
 
 CFscore(
