@@ -4,13 +4,13 @@
 #'
 #' @returns Performance metrics in the observed dataset.
 #' @export
-observed_score <- function(object, data, outcome_formula,
+observed_score <- function(object, data, outcome,
                     metrics = c("auc", "brier", "oeratio", "calplot")) {
 
   cfscore <- list()
 
   # get the observed outcome
-  cfscore$outcome <- extract_lhs(data, outcome_formula)
+  cfscore$outcome <- extract_outcome(data, substitute(outcome))
   if (inherits(cfscore$outcome, "Surv")) {
     stop("This function does not support survival data")
   } else {
