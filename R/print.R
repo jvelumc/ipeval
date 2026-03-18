@@ -116,13 +116,13 @@ plot.CFscore <- function(x, ...) {
 
 assumptions <- function(x) {
 
-  if ("confounders" %in% names(x)) {
-    adjustment_text <- paste0(
-      "{", paste0(x$ipt$confounders, collapse = ", "), "}"
-    )
-  } else {
-    adjustment_text <- "given IP-weights"
-  }
+  # if ("confounders" %in% names(x)) {
+  #   adjustment_text <- paste0(
+  #     "{", paste0(x$ipt$confounders, collapse = ", "), "}"
+  #   )
+  # } else {
+  #   adjustment_text <- "given IP-weights"
+  # }
 
   pp("Estimation of the performance of the prediction model in a counterfactual
      (CF) dataset where everyone's treatment ", x$treatment_column,
@@ -130,17 +130,15 @@ assumptions <- function(x) {
 
   pp("The following assumptions must be satisfied for correct inference:")
 
-  pp(" - Conditional exchangeability requires that ", adjustment_text,
-     " are sufficient to adjust for confounding and selection bias between
-      treatment and outcome.")
+  pp(" - Conditional exchangeability requires that the inverse probability of
+  treatment weights are sufficient to adjust for confounding and selection bias
+  between treatment and outcome.")
 
   pp("- Positivity (assess $ipt$weights for outliers)")
 
-  pp("- Consistency")
+  pp("- Consistency (including no interference)")
 
-  pp("- No interference")
-
-  pp("- Correctly specified propensity formula. Estimated treatment model is ",
+  pp("- Correctly specified propensity model. Estimated treatment model is ",
      print_model(x$ipt$model), ". See also $ipt$model")
 
   if (x$outcome_type == "survival") {

@@ -7,33 +7,35 @@ output:
 # CFeval: an R package for validating predictions under interventions
 
 # Abstract
-We present the R package CFeval, which facilitates evaluation of predictive performance for risk models under hypothetical interventions using observational data where treatment assignment is not uniform. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions.
+We present the R package CFeval, which facilitates evaluation of predictive performance for predictions under interventions using observational data. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions. It implements methods to assess counterfactual predictive performance using inverse probability of treatment weighting (IPTW).
 
 # Introduction
 
 Certain prediction models aim to estimate an individual’s risk under hypothetical intervention scenarios. These are referred to as interventional predictions or predictions under interventions (with "treatment" and "intervention" used interchangeably). For example, a model may estimate a patient’s risk if untreated, if undergoing surgery, or if initiating medication. Models may also predict risk predictions under multiple treatment options by including treatment as a covariate in the model.
 
-Because such predictions under interventions are often intended to inform medical decision-making, rigorous validation is essential. In standard settings, validation entails comparing predicted risks with observed outcomes in a validation dataset. However, in observational data, this comparison is not straightforward for predictions under interventions: each individual typically receives only one treatment, and outcomes that they would have had under alternative interventions remain unobserved. These are referred to as counterfactual outcomes in causal inference terminology.
+Because such predictions under interventions are often intended to inform medical decision-making, rigorous validation is essential. In standard settings, this entails comparing predicted risks with observed outcomes in a validation dataset. However, in observational data, this comparison is not straightforward for predictions under interventions: each individual typically receives only one treatment, and outcomes that they would have had under alternative interventions remain unobserved. These are referred to as counterfactual outcomes in causal inference terminology.
 
 When models are used to guide treatment decisions, it is necessary to assess the accuracy of predicted risks under all intervention options for all individuals, regardless of the intervention actually received. Restricting validation to realized interventions can lead to biased or misleading estimates of predictive performance, particularly when treatment assignment is confounded.
 
-Our objective is to evaluate the counterfactual performance of interventional prediction models, defined as the agreement between predicted risks and the outcomes that would be observed if all individuals were assigned a specific intervention.
+The goal, therefore, is to assess counterfactual predictive performance, defined as the agreement between predicted risks and the outcomes that would be observed if all individuals were assigned a specific intervention.
 
-This document introduces the R package CFeval, which implements methods for evaluating counterfactual performance of predictions under interventions for binary and time-to-event outcomes. This document is structured as follows. We first give a brief overview of the methods. We demonstrate the use of the package for a simple toy example, demonstrating what goes wrong when validating using only observed data and why the methods are then required. 
+The CFeval package provides tools to perform such evaluations for binary and time-to-event outcomes.
 
 # Methods
 The implementation follows previously proposed methods and uses the observed validation data to approximate a counterfactual dataset representing a population in which all individuals receive a specified treatment.
 
-This is achieved via inverse probability of treatment weighting (IPTW). Individuals receiving the treatment of interest are up-weighted to represent the target population in which treatment is uniformly assigned. Weights are estimated as the inverse of the probability of receiving the observed treatment conditional on measured confounders. Identification relies on standard causal assumptions: conditional exchangeability, consistency, positivity, and correct specification of the treatment model.
+This is achieved via inverse probability of treatment weighting (IPTW). Each individual is weighted by the inverse of the probability of receiving their observed treatment conditional on confounders. This reweighting allows individuals who received a given treatment to represent the population in which that treatment is uniformly assigned.
+
+Validity of this approach relies on standard causal assumptions: conditional exchangeability, consistency, positivity, and correct specification of the treatment model. More details are given elsewhere. 
 
 Predictive performance under a given intervention is then evaluated by comparing predicted risks with observed outcomes in the weighted (pseudo-)population. The package supports the following performance measures: area under the receiver operating characteristic curve (AUC), Brier score, observed-to-expected (O/E) ratio, and calibration plots.
 
-# Package usage
+# Illustration
 ```{r, echo=FALSE}
 library(CFeval)
 ```
 
-To demonstrate package usage, we require a validation dataset and interventional predictions to validate. We will simulate data for a binary variable $A$ and a binary outcome $Y$, which are confounded by normally distributed $L$. Additionally, normally distributed variable $P$ predicts outcome $Y$. The causal DAG in Figure 1 shows the relation between these variables. We will simulate that the treatment reduces the log odds ratio of a bad outcome by 0.9. Thus, treatment is protective. Table 1 shows the first few rows of the data. 
+To demonstrate package functionality, we require a validation dataset and interventional predictions to validate. We simulate data with binary treatment $A$, binary outcome $Y$, continuous confounder $L$ and an additional predictor $P$ (see Figure 1). Treatment assignment depends on $L$, and treatment has a protective effect on the outcome. Table 1 shows the first few rows of the data. 
 
 ![DAG for toy example](../man/figures/dag.png)
 
@@ -56,15 +58,18 @@ df_dev <- simulate_data(n = 5000, seed = 1)
 knitr::kable(head(df_dev, n = 5), caption = "First 5 rows of the dataset")
 ```
 
+Two models are fitted to this data. A model that ignores the confounder: 
 
-For demonstration purposes, we will fit 2 models on this dataset, both using variables $A$ and $P$ as covariates. One model (named 'naive') will not take into account the confounding structure, the other model (named 'causal') will, by using IPT-weights.
-
-```{r, warning=FALSE}
+```{r}
 # naive model, not accounting for confounding variable L
 model_naive <- glm(Y ~ A + P, "binomial", df_dev)
 print(coefficients(model_naive))
+```
 
-# causal model, accounting for L by IP-weighting
+And a model that accounts for confounding using inverse probability weights:
+
+```{r, warning=FALSE}
+# causal model, accounting for L by IPTW
 trt_model <- glm(A ~ L, "binomial", df_dev)
 propensity_score <- predict(trt_model, type = "response")
 iptw <- 1 / ifelse(df_dev$A == 1, propensity_score, 1 - propensity_score)
@@ -72,9 +77,10 @@ iptw <- 1 / ifelse(df_dev$A == 1, propensity_score, 1 - propensity_score)
 model_causal <- glm(Y ~ A + P, "binomial", df_dev, weights = iptw)
 print(coefficients(model_causal))
 ```
-Both models generate predictions under treatment ($A=1$) and predictions under no treatment ($A=0$). Note that according to the naive model, no patient should ever be treated, as treatment results in a higher estimated risk for a bad outcome. The causal model correctly infers that treatment benefits patients. Note that the 'true' effect of $A$ was generated within a model that also conditions on $L$. Due to non-collapsibility, we do not expect to find exactly the same coefficients as $L$ is omitted in the models. 
 
-We are now interested in how the models perform in an external validation dataset. This dataset can have a different causal structure from the original development dataset. In this example, the data is simulated in the same way.
+Both models can generate predictions under treatment ($A=1$) and predictions under no treatment ($A=0$). Note that according to the naive model, no patient should ever be treated, as treatment results in a higher estimated risk for a bad outcome. The causal model correctly infers that treatment benefits patients. Note that the 'true' effect of $A$ was generated within a model that also conditions on $L$. Due to non-collapsibility, we do not expect to find the 'true' coefficients as $L$ is omitted in the models. 
+
+We next assess the performance of both models in an external validation dataset, which may in general differ in its underlying data-generating mechanism. In this illustrative example, the validation data are generated using the same process.
 
 ```{r}
 df_val <- simulate_data(n = 10000, seed = 2)
@@ -84,7 +90,7 @@ df_val <- simulate_data(n = 10000, seed = 2)
 knitr::kable(head(df_val, n = 5), caption = "First 5 rows of the external validation dataset")
 ```
 
-For pedagogical purposes, we will now validate these two models on this observed dataset, where some patients were treated and others were not. Conveniently, CFeval package has a function for this.
+We begin by evaluating predictive performance using standard validation based on observed outcomes, where some patients were treated and others were not, and treatment assignment is influenced by confounder $L$.
 
 ```{r}
 observed_score(
@@ -98,13 +104,13 @@ observed_score(
 )
 ```
 
-From this it seems that the naive model outperforms the causal model. These performance measures metrics represent the performance of the models under the given treatment assignment strategy present in the evaluation data.
+Under this evaluation, the naive model appears to outperform the causal model. However, these performance measures quantify the performance of the models under the treatment assignment strategy present in the evaluation data. If these models were to be used for decision-making, the treatment assignment mechanism would change, and these performance estimates would no longer be relevant. 
 
-However, if these models are intended to be used to inform treatment decisions, it is then important that both untreated risk and treated risk are accurate compared to the outcomes patients would get if they were to be untreated and treated, respectively. Thus, the question that we would like to have answered is the following:
+What we really seek to evaluate is whether both untreated risk and treated risk are accurate compared to the outcomes patients would get if they were to be untreated and treated, respectively. Thus, the question that we would like to have answered is the following:
 
 How well does our prediction model perform if we were to treat nobody? And if we were to treat everybody?
 
-The CFeval package aims to provide tools to answer questions like these. The main function CFscore() can be used for this. This function estimates several counterfactual performance measures in a validation dataset, printing by default the assumptions required for valid inference. The first argument is the object to validate. This can be a glm model, a coxph model for survival data, or a numeric vector corresponding to predicted risks, or a combination of these options. Other arguments supplied are the models and the validation data, a formula for which the left hand side denotes the outcome variable in the validation data, a treatment formula for which the left hand side denotes the treatment variable and the right hand side the confounders required to adjust for said treatment, and the hypothetical treatment option for which you want to know how well the model performs if everyone in the population was (counterfactually) assigned to that treatment.
+The CFeval package aims to provide tools to answer questions like these. The main function CFscore() can be used for this. This function estimates several counterfactual performance measures in a validation dataset, printing by default the assumptions required for valid inference. 
 
 Comparing the untreated risk to the counterfactual outcomes under no treatment:
 
@@ -139,29 +145,16 @@ CFscore(
 )
 ```
 
-From these performance metrics it can be seen that the causal model outperforms the naive model. 
+From these performance metrics it can be seen that for both treatment options, the causal model outperforms the naive model in predicting the counterfactual outcome that we would observe if we were to set every patients treatment to the corresponding treatment.
 
-Other functions of the package include support for stabilized ipt-weights, bootstrapping for confidence intervals. Survival models such as Cox models can also be validated on right censored survival data. 
+Other functions of the package include support for stabilized ipt-weights and bootstrapping for confidence intervals. Survival models such as Cox models can also be validated on right censored survival data. 
 
 # Discussion
-The naive model had the best performance on the observed dataset. It was good because L confounded the relation. High values of $L$ means higher risk of bad outcome and at same time higher probability that these patient got treated. The high risk patients were more likely to be treated than the low risk patients. Without treatment, these patients' risk would have been higher. But still, with treatment, many of these patients would still have higher risk than many untreated patients. 
+The apparent superiority of the naive model under standard validation arises because treatment assignment is confounded by the covariate $L$. Individuals at higher baseline risk are more likely to receive treatment, and although treatment reduces risk, these individuals often remain at higher risk than untreated individuals. As a result, the naive model captures associations induced by the treatment assignment mechanism rather than the underlying causal effect.
 
-In the external validation dataset, the same treatment assignment strategy holds, with high values of confounder $L$ leading to higher probability of bad outcome and treatment. 
+This example highlights a fundamental issue: a model that performs well under the current treatment regime may perform poorly when used to guide decisions, because its deployment alters the treatment assignment mechanism. Consequently, validation based solely on observed data may not reflect the model's performance in its intended use. Counterfactual validation addresses this limitation by aligning the evaluation with the decision context.
 
-The model is good in predicting the outcome under the current treatment assignment strategy. The naive model is not good in predicting patients' risk under different interventions. For prediction models that are aimed to suggest treatment decisions, it is important that the model is good in the latter. Because, by adopting and implementing a model that is good in predicting the outcome under current treatment strategy, the treatment assignment strategy is changed, which immediately means the performance metrics are not valid anymore.
-
-It is therefor important to estimate the performance predictions under interventions by comparing these predictions to counterfactual outcomes under the corresponding treatments. 
-
-It is important to realize that it remains an estimation of performance, which can only hope to be valid under assumptions of consistency, sequeantial exhcnageibleit, a correclty specified formula for the IP-weighting. 
+It should be noted that counterfactual performance estimation remains dependent on standard causal assumptions. Violations, such as unmeasured confounding or model misspecification, may lead to biased estimates.
 
 ## Future directions
-Many predictions under interventions are not validated in such a way. 
-
-By implementing these methods in a user-friendly way, it is hoped that future prediction models may be 'counterfactually' validated. 
-
-Many treatments are not point treatments - not on a single instant - but are longitudinal treatments, for example taking statins for 5 years. Dealing with these treatment strategies you may run into time dependent confounding. These methods have been developed. It remains to be implemented in the package.
-
-Methods for competing risks not exist yet, must be first developed. Then can maybe later be implemented. 
-
-
-## Apendix
+Many prediction models intended for decision support are not currently validated within a counterfactual framework. By providing accessible implementations of these methods, CFeval aims to facilitate more appropriate validation practices. Future developments will focus on extending the package to longitudinal treatment strategies, where time-dependent confounding arises, and to settings involving competing risks.
