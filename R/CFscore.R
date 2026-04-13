@@ -9,26 +9,27 @@ library(survival)
 #'   \item a (named) list, with one or more of the previous 2 options, for
 #'   validating and comparing multiple models at once.
 #' }
-#' @param data A data.frame containing at least the observed outcome, assigned
-#'   treatment, and necessary confounders for the validation of object.
-#' @param outcome The outcome, as evaluated within data. E.g. Y for binary
-#'   and Surv(time, status) for time-to-event outcomes.
+#' @param data A data.frame containing the observed outcome, assigned treatment,
+#'   and necessary confounders for the validation of object.
+#' @param outcome The outcome, to be evaluated within data. This could either be
+#'   the name of a numeric column in data, or a Surv object for time-to-event
+#'   data, e.g. Surv(time, status), if time and status are columns in data.
 #' @param treatment_formula A formula which identifies the treatment (left hand
-#'   side). E.g. A ~ 1. The right hand side of the formula can be used to
-#'   specify the confounders used to estimate the inverse probability of
-#'   treatment weights (IPTW) model. E.g. A ~ L, where L is the confounder
-#'   required to adjust for treatment. The IPTW can also be specified themselves
-#'   using the iptw argument, in which case the right hand side of this formula
-#'   is ignored.
+#'   side) and the confounders (right hand side) in the data. E.g. A ~ L. The
+#'   confounders are used to estimate the inverse probability of treatment
+#'   weights (IPTW) model. The IPTW can also be specified themselves using the
+#'   iptw argument, in which case the right hand side of this formula is
+#'   ignored.
 #' @param treatment_of_interest A treatment level for which the counterfactual
 #'   perormance measures should be evaluated.
 #' @param metrics A character vector specifying which performance metrics to be
 #'   computed. Options are c("auc", "brier", "oeratio", "calplot"). See details.
 #' @param time_horizon For time to event data, the prediction horizon of
 #'   interest.
-#' @param cens.model Model for estimating inverse probability of censoring
+#' @param cens_model Model for estimating inverse probability of censoring
 #'   weights (IPCW). Methods currently implemented are Kaplan-Meier ("KM") or
 #'   Cox ("cox") both applied to the censored times.
+#' @param cens_formula
 #' @param null.model If TRUE fit a risk prediction model which ignores the
 #'   covariates and predicts the same value for all subjects. The model is
 #'   fitted using the data in which all subjects are counterfactually assigned
@@ -41,6 +42,7 @@ library(survival)
 #' @param bootstrap If this is an integer greater than 0, this indicates the
 #'   number of bootstrap iterations, to compute 95\% confidence intervals around
 #'   the performance metrics.
+#' @param bootstrap_progress
 #' @param iptw A numeric vector, containing the inverse probability of treatment
 #'   weights. These are normally computed using the treatment_formula, but they
 #'   can be specified directly via this argument. If specified via this
@@ -102,7 +104,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
     choices = c("auc", "brier", "scaled_brier", "oeratio", "calplot"),
     several.ok = TRUE
   )
-  cens.model <- match.arg(cens.model, choices = c("cox", "KM"))
+  cens_model <- match.arg(cens_model, choices = c("cox", "KM"))
 
   # assert treatment is binary
   # assert non-surival outcome is binary
