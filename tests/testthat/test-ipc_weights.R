@@ -72,17 +72,17 @@ test_that("ipc ties", {
   )
 
   expect_equal(
-    ipc_weights(data, Surv(time, status) ~ 1, type = "KM", time_horizon = 1.9)$weights,
+    ipc_weights(data, survival::Surv(time, status) ~ 1, type = "KM", time_horizon = 1.9)$weights,
     c(1,1,1,1)
   )
 
   expect_equal(
-    ipc_weights(data, Surv(time, status) ~ 1, type = "KM", time_horizon = 2.0)$weights,
+    ipc_weights(data, survival::Surv(time, status) ~ 1, type = "KM", time_horizon = 2.0)$weights,
     c(1,1,1,1)
   )
 
   expect_equal(
-    ipc_weights(data, Surv(time, status) ~ 1, type = "KM", time_horizon = 2.1)$weights,
+    ipc_weights(data, survival::Surv(time, status) ~ 1, type = "KM", time_horizon = 2.1)$weights,
     c(1,0,1,2)
   )
 
@@ -91,17 +91,17 @@ test_that("ipc ties", {
     status = c(1, 1, 0, 1)
   )
   expect_equal(
-    ipc_weights(data, Surv(time, status) ~ 1, type = "KM", time_horizon = 1.9)$weights,
+    ipc_weights(data, survival::Surv(time, status) ~ 1, type = "KM", time_horizon = 1.9)$weights,
     c(1,1,1,1)
   )
 
   expect_equal(
-    ipc_weights(data, Surv(time, status) ~ 1, type = "KM", time_horizon = 2.0)$weights,
+    ipc_weights(data, survival::Surv(time, status) ~ 1, type = "KM", time_horizon = 2.0)$weights,
     c(1,1,1,1)
   )
 
   expect_equal(
-    ipc_weights(data, Surv(time, status) ~ 1, type = "KM", time_horizon = 2.1)$weights,
+    ipc_weights(data, survival::Surv(time, status) ~ 1, type = "KM", time_horizon = 2.1)$weights,
     c(1,1,0,2)
   )
 

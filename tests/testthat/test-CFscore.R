@@ -134,8 +134,8 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, uncensored", {
   summary(data$time0)
   summary(data$time1)
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data,
     weights = ipt_weights(data, A ~ L)$weights
   )
@@ -145,7 +145,7 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, uncensored", {
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -192,15 +192,15 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, censor at T", {
 
   data$status_uncensored <- 1
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data
   ) # naive model, i.e. not adjusting for confounding
 
   cfscore_km <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -212,7 +212,7 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, censor at T", {
   cfscore_cox <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -274,15 +274,15 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor", {
                       data$time_uncensored,
                       data$censortime)
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data
   )
 
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -309,7 +309,7 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor", {
   cfscore1 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 1,
     time_horizon = horizon,
@@ -359,15 +359,15 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, cox censor", {
                       data$time_uncensored,
                       data$censortime)
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data
   )
 
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -412,15 +412,15 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor, stab
                       data$time_uncensored,
                       data$censortime)
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data
   )
 
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -436,7 +436,7 @@ test_that("CFscore metrics equal to unobserved CF metrics, surv, KM censor, stab
   cfscore_unstable <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = horizon,
@@ -537,15 +537,15 @@ test_that("results are in between lower & upper bootstrap, surv, cox censor", {
                       data$time_uncensored,
                       data$censortime)
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data
   )
 
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     cens_model = "cox",
@@ -637,17 +637,17 @@ test_that("null model survival outcome", {
                       data$censortime)
 
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     x = TRUE,
     data = data
   )
-  nullmodel <- survfit(Surv(time0, status_uncensored) ~ 1, data)
+  nullmodel <- survival::survfit(survival::Surv(time0, status_uncensored) ~ 1, data)
 
   cfscore <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     metrics = c(),
@@ -687,15 +687,15 @@ test_that("CFscore handles horizon on censor time correctly", {
 
   data$status_uncensored <- 1
 
-  model <- coxph(
-    formula = Surv(time, status) ~ P + A,
+  model <- survival::coxph(
+    formula = survival::Surv(time, status) ~ P + A,
     data = data
   )
 
   cfscore_km999 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 9.999,
@@ -707,7 +707,7 @@ test_that("CFscore handles horizon on censor time correctly", {
   cfscore_km10 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 10,
@@ -719,7 +719,7 @@ test_that("CFscore handles horizon on censor time correctly", {
   cfscore_cox999 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 9.999,
@@ -731,7 +731,7 @@ test_that("CFscore handles horizon on censor time correctly", {
   cfscore_cox10 <- CFscore(
     data = data,
     object = model,
-    outcome = Surv(time, status),
+    outcome = survival::Surv(time, status),
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     time_horizon = 10,
