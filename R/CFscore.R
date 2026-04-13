@@ -29,7 +29,8 @@ library(survival)
 #' @param cens_model Model for estimating inverse probability of censoring
 #'   weights (IPCW). Methods currently implemented are Kaplan-Meier ("KM") or
 #'   Cox ("cox") both applied to the censored times.
-#' @param cens_formula
+#' @param cens_formula Formula for which the r.h.s. determines the censoring
+#'   probabilities. I.e. ~ x1 + x2.
 #' @param null_model If TRUE fit a risk prediction model which ignores the
 #'   covariates and predicts the same value for all subjects. The model is
 #'   fitted using the data in which all subjects are counterfactually assigned
@@ -42,7 +43,8 @@ library(survival)
 #' @param bootstrap If this is an integer greater than 0, this indicates the
 #'   number of bootstrap iterations, to compute 95\% confidence intervals around
 #'   the performance metrics.
-#' @param bootstrap_progress
+#' @param bootstrap_progress if set to TRUE, print a progress bar indicating the
+#'   progress of bootstrap procedure.
 #' @param iptw A numeric vector, containing the inverse probability of treatment
 #'   weights. These are normally computed using the treatment_formula, but they
 #'   can be specified directly via this argument. If specified via this

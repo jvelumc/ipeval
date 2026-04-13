@@ -7,13 +7,14 @@
 CFscore(
   object,
   data,
-  outcome_formula,
+  outcome,
   treatment_formula,
   treatment_of_interest,
   metrics = c("auc", "brier", "oeratio", "calplot"),
   time_horizon,
-  cens.model = "cox",
-  null.model = TRUE,
+  cens_model = "KM",
+  cens_formula = ~1,
+  null_model = TRUE,
   stable_iptw = FALSE,
   bootstrap = 0,
   bootstrap_progress = TRUE,
@@ -31,39 +32,37 @@ CFscore(
   validating and comparing multiple models at once.
 }}
 
-\item{data}{A data.frame containing at least the observed outcome, assigned
-treatment, and necessary confounders for the validation of object.}
+\item{data}{A data.frame containing the observed outcome, assigned treatment,
+and necessary confounders for the validation of object.}
 
-\item{outcome_formula}{A formula which identifies the outcome (left hand
-side). E.g. Y ~ 1 for binary and Surv(time, status) ~ 1 for time-to-event
-outcomes. In right censored data, the right hand side of the formula is
-used to estimate the inverse probability of censoring weights (IPCW) model.
-Alternatively, the IPCW can also be specified themselves using the ipcw
-argument, in which case the right hand side of this formula is ignored.}
+\item{outcome}{The outcome, to be evaluated within data. This could either be
+the name of a numeric column in data, or a Surv object for time-to-event
+data, e.g. Surv(time, status), if time and status are columns in data.}
 
 \item{treatment_formula}{A formula which identifies the treatment (left hand
-side). E.g. A ~ 1. The right hand side of the formula can be used to
-specify the confounders used to estimate the inverse probability of
-treatment weights (IPTW) model. E.g. A ~ L, where L is the confounder
-required to adjust for treatment. The IPTW can also be specified themselves
-using the iptw argument, in which case the right hand side of this formula
-is ignored.}
+side) and the confounders (right hand side) in the data. E.g. A ~ L. The
+confounders are used to estimate the inverse probability of treatment
+weights (IPTW) model. The IPTW can also be specified themselves using the
+iptw argument, in which case the right hand side of this formula is
+ignored.}
 
 \item{treatment_of_interest}{A treatment level for which the counterfactual
 perormance measures should be evaluated.}
 
 \item{metrics}{A character vector specifying which performance metrics to be
-computed. Options are c("auc", "brier", "oeratio",
-"calplot"). See details.}
+computed. Options are c("auc", "brier", "oeratio", "calplot"). See details.}
 
 \item{time_horizon}{For time to event data, the prediction horizon of
 interest.}
 
-\item{cens.model}{Model for estimating inverse probability of censoring
+\item{cens_model}{Model for estimating inverse probability of censoring
 weights (IPCW). Methods currently implemented are Kaplan-Meier ("KM") or
 Cox ("cox") both applied to the censored times.}
 
-\item{null.model}{If TRUE fit a risk prediction model which ignores the
+\item{cens_formula}{Formula for which the r.h.s. determines the censoring
+probabilities. I.e. ~ x1 + x2.}
+
+\item{null_model}{If TRUE fit a risk prediction model which ignores the
 covariates and predicts the same value for all subjects. The model is
 fitted using the data in which all subjects are counterfactually assigned
 the treatment of interest (using the IPTW, as estimated using the
@@ -77,6 +76,9 @@ argument).}
 \item{bootstrap}{If this is an integer greater than 0, this indicates the
 number of bootstrap iterations, to compute 95\% confidence intervals around
 the performance metrics.}
+
+\item{bootstrap_progress}{if set to TRUE, print a progress bar indicating the
+progress of bootstrap procedure.}
 
 \item{iptw}{A numeric vector, containing the inverse probability of treatment
 weights. These are normally computed using the treatment_formula, but they
@@ -100,11 +102,11 @@ Counterfactual validation score
 auc is area under the (ROC) curve, estimated ...
 
   Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
+  scaled brier score is also possible (metric = "scaled_brier")
 
-  oeratio represents the observed/expected ratio, where
-  observed is the mean of the outcomes in the pseudopopulation.
-  The expected is the mean of the predictions in the original observed
-  population.
+  oeratio represents the observed/expected ratio, where observed is the mean
+  of the outcomes in the pseudopopulation. The expected is the mean of the
+  predictions in the original observed population.
 }
 \examples{
 n <- 1000
@@ -120,7 +122,7 @@ naive_perfect <- data$Y
 CFscore(
   object = list("ran" = random, "mod" = model, "per" = naive_perfect),
   data = data,
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L,
   treatment_of_interest = 0,
 )

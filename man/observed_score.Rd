@@ -9,7 +9,7 @@ not user friendly and should not be used.}
 observed_score(
   object,
   data,
-  outcome_formula,
+  outcome,
   metrics = c("auc", "brier", "oeratio", "calplot")
 )
 }

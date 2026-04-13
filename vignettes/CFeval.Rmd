@@ -100,11 +100,11 @@ To account for the time to event data, the left hand side of the outcome_formula
 cfs <- CFscore(
   object = list("naive model" = model_naive, "causal model" = model_causal),
   data = data,
-  outcome_formula = Surv(time, status) ~ 1,
+  outcome = Surv(time, status),
   treatment_formula = A ~ L1 + L2,
   treatment_of_interest = 1,
   time_horizon = 5,
-  cens.model = "KM"
+  cens_model = "KM"
 )
 cfs
 ```
@@ -132,11 +132,12 @@ We then set censoring method to "cox", and supply the formula needed for the cen
 CFscore(
   object = list("naive model" = model_naive, "causal model" = model_causal),
   data = data,
-  outcome_formula = Surv(time, status) ~ L1 + P2,
+  outcome = Surv(time, status),
   treatment_formula = A ~ L1 + L2,
   treatment_of_interest = 1,
   time_horizon = 5,
-  cens.model = "cox",
+  cens_model = "cox",
+  cens_formula = ~ L1 + P2,
   bootstrap = 100,
   bootstrap_progress = FALSE
 )

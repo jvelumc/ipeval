@@ -2,6 +2,7 @@ todo
 - CRAN
   - package name (CFeval?)
   - determine how to specify outcome & censoring mechanisms
+  - multiple censoring mechanisms
   - doc cfscore
   - readme
   - vignette
@@ -10,4 +11,5 @@ todo
   - what else required for CRAN?
   - refactor tests (define data once and reuse?)
   - remove df_dev df_val
+  - calplot flexibility (n knots, colors, limits, labels, etc via ...?)
 - longitudinal trts
