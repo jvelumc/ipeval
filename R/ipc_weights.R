@@ -12,14 +12,14 @@ ipc_weights <- function(data, formula, type, time_horizon) {
   if (type == "KM")
     stopifnot(rhs_is_one(formula))
 
-  mf <- model.frame(formula, data)
-  y <- model.response(mf)
+  mf <- stats::model.frame(formula, data)
+  y <- stats::model.response(mf)
 
   p_uncensored <- switch(
     type,
     KM = {
       fit <- prodlim::prodlim(formula, data = data, reverse = TRUE)
-      p_not_censor <- stepfun(fit$time, c(1, fit$surv), right = TRUE)
+      p_not_censor <- stats::stepfun(fit$time, c(1, fit$surv), right = TRUE)
       list(
         model = fit,
         probability = p_not_censor(pmin(y[, "time"], time_horizon))
@@ -30,7 +30,7 @@ ipc_weights <- function(data, formula, type, time_horizon) {
 
       flipped_form <- flip_surv_event(formula)
 
-      fit <- coxph(flipped_form, data = data, model = TRUE, x = TRUE)
+      fit <- survival::coxph(flipped_form, data = data, model = TRUE, x = TRUE)
       list(
         model = fit,
         probability = 1-predict_cox(fit, data, pmin(y[, "time"], time_horizon))

@@ -37,7 +37,7 @@ predict_cox <- function(model, data, time_horizon) {
 
   S0_horizon <- exp(-H0_horizon)
 
-  lp <- predict(model, newdata = data, type = "lp")
+  lp <- stats::predict(model, newdata = data, type = "lp")
 
   S_horizon <- S0_horizon^exp(lp)
   1-S_horizon

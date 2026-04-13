@@ -46,20 +46,20 @@ plot.CFscore <- function(x, ...) {
        xlim = c(0, 1), ylim = c(0, 1),
        asp = 1,
        xlab = "Predicted", ylab = "Observed")
-  title(
+  graphics::title(
     main = "Counterfactual calibration plot",
     sub = paste0("Calibration plot had everyone followed treatment option ", x$treatment_of_interest),
     col.sub = "#404040",
     cex.sub = 0.8
   )
   graphics::abline(0, 1, col = "black")
-  colors <- adjustcolor(
-    rep(palette()[-1], length.out = length(models)),
+  colors <- grDevices::adjustcolor(
+    rep(grDevices::palette()[-1], length.out = length(models)),
     alpha.f = 0.8
   )
 
   for (i in seq_along(models)) {
-    lines(
+    graphics::lines(
       x = x$score$calplot[["pred", models[i]]],
       y = x$score$calplot[["obs", models[i]]],
       type = "o",
@@ -67,7 +67,7 @@ plot.CFscore <- function(x, ...) {
       lw = 2
     )
   }
-  legend("topleft",
+  graphics::legend("topleft",
          legend = models,
          col    = colors,
          lty    = 1,
@@ -80,14 +80,14 @@ plot.CFscore <- function(x, ...) {
            xlim = c(0, 1), ylim = c(0, 1),
            xlab = "Predicted", ylab = "Observed",
            asp = 1)
-      title(
+      graphics::title(
         main = paste0("Counterfactual calibration plot for ", m),
         sub = paste0("Calibration plot had everyone followed treatment option ", x$treatment_of_interest),
         col.sub = "#404040",
         cex.sub = 0.8
       )
       for (i in 1:x$bootstrap_iterations) {
-        lines(
+        graphics::lines(
           x = x$bootstrap$raw$calplot[[m]][[i]]$pred,
           y = x$bootstrap$raw$calplot[[m]][[i]]$obs,
           type = "o",
@@ -95,13 +95,13 @@ plot.CFscore <- function(x, ...) {
         )
       }
       graphics::abline(0, 1, col = "black")
-      lines(
+      graphics::lines(
         x = x$score$calplot[["pred", m]],
         y = x$score$calplot[["obs", m]],
         type = "o",
         col = "blue", lw = 2,
       )
-      legend("topleft",
+      graphics::legend("topleft",
              legend = c("bootstrap iteration", "original (CF) data"),
              col    = c("darkgrey", "blue"),
              lty    = 1,

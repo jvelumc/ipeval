@@ -170,7 +170,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
     cfscore$ipt$model <- ipt$model
 
     if (stable_iptw == TRUE) {
-      stable_treatment_formula <- update.formula(treatment_formula, . ~ 1)
+      stable_treatment_formula <- stats::update.formula(treatment_formula, . ~ 1)
       sipt <- ipt_weights(data, stable_treatment_formula)
       iptw <- 1/sipt$weights * iptw
       cfscore$ipt$stable_model <- sipt$model
@@ -185,7 +185,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
 
       # annoying code to combine the Surv object from the outcome with the given
       # r.h.s. of the cens_formula
-      cfscore$ipc$cens_formula <- update.formula(
+      cfscore$ipc$cens_formula <- stats::update.formula(
         old = cens_formula,
         new = substitute(outcome ~ ., list(outcome = substitute(outcome)))
       )
@@ -202,11 +202,11 @@ CFscore <- function(object, data, outcome, treatment_formula,
   if (null_model == TRUE) {
     pseudo_ids <- cfscore$observed_treatment == cfscore$treatment_of_interest
     if (cfscore$outcome_type == "binary") {
-      null_model <- lm(
+      null_model <- stats::lm(
         cfscore$outcome[pseudo_ids] ~ 1,
         weights = cfscore$ipt$weights[pseudo_ids]
       )
-      null_preds <- predict.lm(null_model, newdata = data)
+      null_preds <- stats::predict.lm(null_model, newdata = data)
     } else { # survival outcome
       # fit null model in a pseudopopuluation where everyone was treated and
       # no censoring
@@ -215,7 +215,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
       uncensor_ids <- cfscore$ipc$weights != 0
       cf_ids <- pseudo_ids & uncensor_ids
 
-      null_model <- weighted.mean(
+      null_model <- stats::weighted.mean(
         cfscore$status_at_horizon[cf_ids],
         cfscore$ipt$weights[cf_ids]*cfscore$ipc$weights[cf_ids]
       )

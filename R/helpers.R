@@ -3,8 +3,8 @@ is.formula <- function(x) {
 }
 
 extract_lhs <- function(data, formula) {
-  mf <- model.frame(formula, data)
-  unname(model.response(mf))
+  mf <- stats::model.frame(formula, data)
+  unname(stats::model.response(mf))
 }
 
 rhs_is_one <- function(formula) {
@@ -52,6 +52,6 @@ check_input <- function(arg, class) {
 
 
 simulate_time_to_event <- function(n, constant_baseline_haz, LP) {
-  u <- runif(n)
+  u <- stats::runif(n)
   -log(u) / (constant_baseline_haz * exp(LP))
 }
