@@ -30,7 +30,7 @@ library(survival)
 #'   weights (IPCW). Methods currently implemented are Kaplan-Meier ("KM") or
 #'   Cox ("cox") both applied to the censored times.
 #' @param cens_formula
-#' @param null.model If TRUE fit a risk prediction model which ignores the
+#' @param null_model If TRUE fit a risk prediction model which ignores the
 #'   covariates and predicts the same value for all subjects. The model is
 #'   fitted using the data in which all subjects are counterfactually assigned
 #'   the treatment of interest (using the IPTW, as estimated using the
@@ -88,8 +88,8 @@ library(survival)
 CFscore <- function(object, data, outcome, treatment_formula,
                     treatment_of_interest,
                     metrics = c("auc", "brier", "oeratio", "calplot"),
-                    time_horizon, cens.model = "KM", cens_formula = ~ 1,
-                    null.model = TRUE, stable_iptw = FALSE,
+                    time_horizon, cens_model = "KM", cens_formula = ~ 1,
+                    null_model = TRUE, stable_iptw = FALSE,
                     bootstrap = 0, bootstrap_progress = TRUE,
                     iptw, ipcw, quiet = FALSE) {
 
@@ -179,7 +179,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
   if (cfscore$outcome_type == "survival") {
     cfscore$ipc$method <- "weights manually specified"
     if (missing(ipcw)) {
-      cfscore$ipc$method <- cens.model
+      cfscore$ipc$method <- cens_model
 
       # annoying code to combine the Surv object from the outcome with the given
       # r.h.s. of the cens_formula
@@ -188,7 +188,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
         new = substitute(outcome ~ ., list(outcome = substitute(outcome)))
       )
       ipc <- ipc_weights(data, cfscore$ipc$cens_formula,
-                         cens.model, time_horizon)
+                         cens_model, time_horizon)
       ipcw <- ipc$weights
       cfscore$ipc$model <- ipc$model
 
@@ -197,7 +197,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
   }
 
   # add null model if required
-  if (null.model == TRUE) {
+  if (null_model == TRUE) {
     pseudo_ids <- cfscore$observed_treatment == cfscore$treatment_of_interest
     if (cfscore$outcome_type == "binary") {
       null_model <- lm(
