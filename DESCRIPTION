@@ -36,6 +36,8 @@ URL: https://jvelumc.github.io/CFeval/
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    ipw,
+    riskRegression
 Config/testthat/edition: 3
 VignetteBuilder: knitr
