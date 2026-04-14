@@ -1,82 +1,57 @@
-n <- 10000
+data <- data.frame(
+  time = c(1,2,2,3),
+  status = c(1, 1, 0, 1)
+)
 
-data <- data.frame(id = 1:n)
-data$L <- rnorm(n)
-data$A <- rbinom(n, 1, plogis(2*data$L))
-data$P <- rnorm(n)
-data$Z <- runif(n)
-data$Y0 <- rbinom(n, 1, plogis(0.5 + data$L + 1.25 * data$P))
-data$Y1 <- rbinom(n, 1, plogis(0.5 + data$L + 1.25 * data$P - 0.9*data$A))
-data$Y <- ifelse(data$A == 1, data$Y1, data$Y0)
-
-trt_model <- glm(A ~ L, family = "binomial", data = data)
-propensity_score <- predict(trt_model, type = "response")
-data$iptw <- 1 / ifelse(data$A == 1, propensity_score, 1 - propensity_score)
-causal_model <- glm(Y ~ A + P, family = "binomial", data = data, weights = iptw)
+# force censors after events by increasing timing of censors by epsilon
+data2 <- data.frame(
+  time = c(1, 2, 2.0000001, 3),
+  status = c(1, 1, 0, 1)
+)
 
 
-
-
-
-
-
-
-
-
-
-
-cf <- function(data, outcome, cens_formula) {
-
-  check_missing(outcome)
-  y <- extract_outcome(data, substitute(outcome))
-
-  f <- update.formula(
-    old = cens_formula,
-    new = substitute(outcome ~ ., list(outcome = substitute(outcome)))
-  )
-
-  ipt_weights(data, f)
+get_step <- function(fit) {
+  stepfun(fit$time, 1-c(1, fit$surv), right = TRUE)
 }
 
-
-
-
-cf(data, A, ~ L)
-
-
+# 'truth'
+get_step(survfit(Surv(time, !status) ~ 1, data2))
 
 
 
 
 
-cf <- CFscore(
-  object = causal_model,
-  data = data,
-  outcome = Y,
-  treatment_formula = A ~ L,
-  treatment_of_interest = 0,
-  metrics = c("oeratio", "brier", "brier")
-)
-
-CFscore(
-  object = causal_model,
-  data = data,
-  outcome_formula = Y ~ 1,
-  treatment_formula = A ~ L,
-  treatment_of_interest = 1,
-  metrics = c("oeratio"),
-  null.model = FALSE
-)
-
-observed_score(
-  predict_CF(causal_model, data, "A", 1),
-  data, Y1 ~ 1, metrics = "oeratio")
+get_step(survfit(Surv(time, status == FALSE) ~ 1, data))
 
 
-data$A <- 1
 
-riskRegression::Score(
-  object = list(causal_model),
-  formula = Y1 ~ 1,
-  data = data
-)
+
+
+get_step(prodlim(Surv(time, status) ~ 1, data, reverse = TRUE))
+
+
+
+
+get_step(survfit(coxph(Surv(time, !status) ~ 1, data)))
+get_step(survfit(coxph(Surv(time, !status) ~ 1, data2)))
+
+
+
+get_step(survfit(coxph(Hist(time, status, cens.code = "1") ~ 1, data)))
+
+# why is this not 0.5?
+
+
+
+
+mf <- stats::model.frame(Surv(time, status) ~ 1, data)
+y <- stats::model.response(mf)
+
+event_times <- unique(y[y[, "status"] == 1, "time"])
+censor_times <- unique(y[y[, "status"] == 0, "time"])
+
+
+any(event_times %in% censor_times)
+
+y[, "status"]
+y[, "time"]

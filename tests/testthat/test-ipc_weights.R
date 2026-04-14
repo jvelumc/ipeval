@@ -105,6 +105,10 @@ test_that("ipc ties", {
     c(1,1,0,2)
   )
 
+  expect_warning(
+    ipc_weights(data, survival::Surv(time, status) ~ 1,
+                type = "cox", time_horizon = 2)
+  )
 })
 
 test_that(
