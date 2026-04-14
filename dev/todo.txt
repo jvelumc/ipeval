@@ -1,14 +1,18 @@
 todo
 - CRAN
   - package name (CFeval?)
-  - determine how to specify outcome & censoring mechanisms
-  - multiple censoring mechanisms
+  x determine how to specify outcome & censoring mechanisms
   - doc cfscore
   - readme
   - vignette
   - iptw/ipcw tests
   - pick default censoring model (KM or cox. RR uses cox for default, but overwrites to KM if no covariates are specified for ipcw formula)
-  - what else required for CRAN?
   - refactor tests (define data once and reuse?)
   - calplot flexibility (n knots, colors, limits, labels, etc via ...?)
+  - what else required for CRAN v1?
 - longitudinal trts
+- multiple censoring mechanisms
+
+
+discuss
+- event/censor ties for cox censoring
