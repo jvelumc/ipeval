@@ -10,6 +10,5 @@ todo
   - pick default censoring model (KM or cox. RR uses cox for default, but overwrites to KM if no covariates are specified for ipcw formula)
   - what else required for CRAN?
   - refactor tests (define data once and reuse?)
-  - remove df_dev df_val
   - calplot flexibility (n knots, colors, limits, labels, etc via ...?)
 - longitudinal trts
