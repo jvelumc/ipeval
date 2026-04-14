@@ -7,8 +7,7 @@ flip_surv_event <- function(formula) {
 }
 
 ipc_weights <- function(data, formula, type, time_horizon) {
-
-
+  # perhaps use riskRegression::ipcw()
   if (type == "KM")
     stopifnot(rhs_is_one(formula))
 
@@ -27,7 +26,7 @@ ipc_weights <- function(data, formula, type, time_horizon) {
     },
     cox = {
       # coxph has no reverse argument, need to flip it manually
-
+      # not sure whether this handles event/censor ties correctly
       flipped_form <- flip_surv_event(formula)
 
       fit <- survival::coxph(flipped_form, data = data, model = TRUE, x = TRUE)
