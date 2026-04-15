@@ -30,7 +30,7 @@ print.CFscore <- function(x, ...) {
     print(tab, digits = 3, row.names = FALSE)
   }
 
-  if (grepl("calplot", x$metrics)) {
+  if (any(grepl("calplot", x$metrics))) {
     plot(x, ...)
   }
 }
