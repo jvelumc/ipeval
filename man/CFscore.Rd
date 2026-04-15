@@ -26,8 +26,10 @@ CFscore(
 \arguments{
 \item{object}{One of the following three options to be validated:
 \itemize{
-  \item a numeric vector, corresponding to risk predictions
-  \item a glm or coxph model
+  \item a numeric vector, corresponding to risk predictions under
+  intervention of interest.
+  \item a glm or coxph model, capable of estimating risks under intervention
+  of interest. See details.
   \item a (named) list, with one or more of the previous 2 options, for
   validating and comparing multiple models at once.
 }}
@@ -36,8 +38,9 @@ CFscore(
 and necessary confounders for the validation of object.}
 
 \item{outcome}{The outcome, to be evaluated within data. This could either be
-the name of a numeric column in data, or a Surv object for time-to-event
-data, e.g. Surv(time, status), if time and status are columns in data.}
+the name of a numeric/logical column in data, or a Surv object for
+time-to-event data, e.g. Surv(time, status), if time and status are columns
+in data.}
 
 \item{treatment_formula}{A formula which identifies the treatment (left hand
 side) and the confounders (right hand side) in the data. E.g. A ~ L. The
@@ -55,9 +58,10 @@ computed. Options are c("auc", "brier", "oeratio", "calplot"). See details.}
 \item{time_horizon}{For time to event data, the prediction horizon of
 interest.}
 
-\item{cens_model}{Model for estimating inverse probability of censoring
+\item{cens_model}{Model for estimating inverse probability of censored
 weights (IPCW). Methods currently implemented are Kaplan-Meier ("KM") or
-Cox ("cox") both applied to the censored times.}
+Cox ("cox"), both applied to the censored times. KM is only supported when
+the right hand side of cens_formula is 1.}
 
 \item{cens_formula}{Formula for which the r.h.s. determines the censoring
 probabilities. I.e. ~ x1 + x2.}
@@ -96,17 +100,27 @@ argument, bootstrap is not possible.}
 A list with performance metrics.
 }
 \description{
-Counterfactual validation score
+Estimates the predictive performance of predictions under interventions, by
+forming a weighted counterfactual population in which every subject was
+assigned the treatment of interest.
 }
 \details{
+When supplying a glm or coxph model, the model should be able to estimate
+risks under the intervention of interest. This could be done in two ways: the
+model does not have a treatment covariate, and always estimates the risk
+under intervention of interest. Alternatively, the model has a covariate for
+treatment. This function then automatically estimates the risk under the
+treatment of interest for all subjects, even if they were assigned
+alternative treatment.
+
 auc is area under the (ROC) curve, estimated ...
 
-  Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
-  scaled brier score is also possible (metric = "scaled_brier")
+Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
+scaled brier score is also possible (metric = "scaled_brier")
 
-  oeratio represents the observed/expected ratio, where observed is the mean
-  of the outcomes in the pseudopopulation. The expected is the mean of the
-  predictions in the original observed population.
+oeratio represents the observed/expected ratio, where observed is the mean of
+the outcomes in the pseudopopulation. The expected is the mean of the
+predictions in the original observed population.
 }
 \examples{
 n <- 1000
@@ -126,4 +140,18 @@ CFscore(
   treatment_formula = A ~ L,
   treatment_of_interest = 0,
 )
+}
+\references{
+Keogh RH, Van Geloven N. Prediction Under Interventions:
+  Evaluation of Counterfactual Performance Using Longitudinal Observational
+  Data. Epidemiology. 2024;35(3):329-339. doi:10.1097/EDE.0000000000001713
+
+  Boyer CB, Dahabreh IJ, Steingrimsson JA. Estimating and Evaluating
+  Counterfactual Prediction Models. Statistics in Medicine.
+  2025;44(23-24):e70287. doi:10.1002/sim.70287
+
+  Pajouheshnia R, Peelen LM, Moons KGM, Reitsma JB, Groenwold RHH. Accounting
+  for treatment use when validating a prognostic model: a simulation study.
+  BMC Medical Research Methodology. 2017;17(1):103.
+  doi:10.1186/s12874-017-0375-8
 }

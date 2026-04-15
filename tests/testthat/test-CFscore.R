@@ -1,5 +1,63 @@
 # input checks
 
+test_that("wrong input throws sensible errors", {
+  n <- 1000
+  adminstrative_censor <- 10
+  data <- data.frame(
+    L = rnorm(n, mean = 0),
+    P = rnorm(n, mean = 0)
+  )
+  data$A <- rbinom(n, 1, plogis(0.2 + 0.5*data$L))
+
+  data$time0 <- simulate_time_to_event(n, 0.04, data$L + 0.5*data$P)
+  data$time1 <- simulate_time_to_event(n, 0.04, data$L + 0.5*data$P - 0.6)
+  data$time_uncensored <- ifelse(data$A == 1, data$time1, data$time0)
+  data$status <- ifelse(data$time_uncensored <= adminstrative_censor, TRUE, FALSE)
+  data$time <- ifelse(data$status == TRUE, data$time_uncensored, adminstrative_censor)
+
+  predictions <- runif(n, 0, 1)
+
+  # object ------------------------------------------------------------------
+  expect_error(
+    CFscore(predictions[1:999], data = data, outcome = status, A ~ L, 1),
+    "Predictions must be of length nrow"
+  )
+
+  expect_error(
+    CFscore(lm(status ~ A, data), data = data, outcome = status, A ~ L, 1)
+  )
+
+
+
+  # outcome -----------------------------------------------------------------
+  expect_error(
+    CFscore(predictions, data = data, outcome = B, A ~ L, 1),
+    "Outcome B not found"
+  )
+
+  expect_error(
+    CFscore(predictions, data = data, outcome = data$status[1:999], A ~ L, 1),
+    "Outcome must be of length"
+  )
+
+  expect_error(
+    CFscore(predictions, data = data, outcome = time, A ~ L, 1),
+    "Outcome must be binary"
+  )
+
+  expect_error(
+    CFscore(predictions, data = data, outcome = rep(1, 1000), A ~ L, 1,
+            metrics = "auc"),
+    "no controls"
+  )
+
+
+
+
+
+
+})
+
 test_that("supplying (list of) model or predictions equivalent", {
   set.seed(1)
   n <- 1000

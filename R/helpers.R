@@ -8,6 +8,8 @@ extract_lhs <- function(data, formula) {
 }
 
 rhs_is_one <- function(formula) {
+  # set lhs to 1 if there is none, otherwise supplying ~ 1 will return false
+  formula <- update.formula(formula, 1 ~ .)
   identical(formula[[3]], 1)
 }
 

@@ -8,7 +8,7 @@ predict_CF <- function(model, data, A_column, CF_treatment, time_horizon) {
   if ("coxph" %in% class(model)) {
     return(predict_cox(model, data, time_horizon))
   }
-  stop("model class", class(model), "not supported")
+  stop("model class ", class(model), " not supported")
 }
 
 

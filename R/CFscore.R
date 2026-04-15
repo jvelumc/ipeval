@@ -2,18 +2,47 @@ library(survival)
 
 #' Counterfactual validation score
 #'
+#' Estimates the predictive performance of predictions under interventions, by
+#' forming a weighted pseudopopulation in which every subject was assigned the
+#' treatment of interest.
+#'
+#' When supplying a glm or coxph model, the model should be able to estimate
+#' risks under the intervention of interest. This could be done in two ways: the
+#' model does not have a treatment covariate, and always estimates the risk
+#' under intervention of interest. Alternatively, the model has a covariate for
+#' treatment. This function then automatically estimates the risk under the
+#' treatment of interest for all subjects, even if they were assigned
+#' alternative treatment.
+#'
+#' All performance metrics are computed on the weighted population in which
+#' every subject was counterfactually assigned treatment of interest. \code{auc}
+#' is area under the (ROC) curve. Brier score is defined as \code{1 / sum(iptw)
+#' sum(predictions_i - outcome_i)^2}. Scaled brier score is also available
+#' (\code{metrics = "scaled_brier"}). For the O/E ratio, the numerator
+#' (observed) is the weighted fraction of events in the pseudopopulation, and
+#' the denominator (expected) is the unweighted mean of risk estimates of the
+#' original unweighted population. The \code{calplot} option generates a
+#' calibration plot, with default 8 knots.
+#'
+#' oeratio represents the observed/expected ratio, where observed is the mean of
+#' the outcomes in the pseudopopulation. The expected is the mean of the
+#' predictions in the original observed population.
+#'
 #' @param object One of the following three options to be validated:
 #' \itemize{
-#'   \item a numeric vector, corresponding to risk predictions
-#'   \item a glm or coxph model
+#'   \item a numeric vector, corresponding to risk predictions under
+#'   intervention of interest.
+#'   \item a glm or coxph model, capable of estimating risks under intervention
+#'   of interest. See details.
 #'   \item a (named) list, with one or more of the previous 2 options, for
 #'   validating and comparing multiple models at once.
 #' }
 #' @param data A data.frame containing the observed outcome, assigned treatment,
 #'   and necessary confounders for the validation of object.
 #' @param outcome The outcome, to be evaluated within data. This could either be
-#'   the name of a numeric column in data, or a Surv object for time-to-event
-#'   data, e.g. Surv(time, status), if time and status are columns in data.
+#'   the name of a numeric/logical column in data, or a Surv object for
+#'   time-to-event data, e.g. Surv(time, status), if time and status are columns
+#'   in data.
 #' @param treatment_formula A formula which identifies the treatment (left hand
 #'   side) and the confounders (right hand side) in the data. E.g. A ~ L. The
 #'   confounders are used to estimate the inverse probability of treatment
@@ -26,9 +55,10 @@ library(survival)
 #'   computed. Options are c("auc", "brier", "oeratio", "calplot"). See details.
 #' @param time_horizon For time to event data, the prediction horizon of
 #'   interest.
-#' @param cens_model Model for estimating inverse probability of censoring
+#' @param cens_model Model for estimating inverse probability of censored
 #'   weights (IPCW). Methods currently implemented are Kaplan-Meier ("KM") or
-#'   Cox ("cox") both applied to the censored times.
+#'   Cox ("cox"), both applied to the censored times. KM is only supported when
+#'   the right hand side of cens_formula is 1.
 #' @param cens_formula Formula for which the r.h.s. determines the censoring
 #'   probabilities. I.e. ~ x1 + x2.
 #' @param null_model If TRUE fit a risk prediction model which ignores the
@@ -37,7 +67,7 @@ library(survival)
 #'   the treatment of interest (using the IPTW, as estimated using the
 #'   treatment_formula or as given by the iptw argument). For time-to-event
 #'   outcomes, the subjects are also counterfactually uncensored (using the
-#'   IPCW, as estimated using the outcome_formula, or as given by the ipcw
+#'   IPCW, as estimated using the cens_formula, or as given by the ipcw
 #'   argument).
 #' @param stable_iptw if TRUE, estimate stabilized IPTW weights. See details.
 #' @param bootstrap If this is an integer greater than 0, this indicates the
@@ -50,23 +80,26 @@ library(survival)
 #'   can be specified directly via this argument. If specified via this
 #'   argument, bootstrap is not possible.
 #' @param ipcw A numeric vector, containing the inverse probability of censor
-#'   weights. These are normally computed using the outcome_formula, but they
-#'   can be specified directly via this argument. If specified via this
-#'   argument, bootstrap is not possible.
+#'   weights. These are normally computed using the cens_formula, but they can
+#'   be specified directly via this argument. If specified via this argument,
+#'   bootstrap is not possible.
 #' @param quiet If set to TRUE, don't print assumptions.
 #'
 #' @returns A list with performance metrics.
 #'
-#' @details auc is area under the (ROC) curve, estimated ...
-#'
-#'   Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
-#'   scaled brier score is also possible (metric = "scaled_brier")
-#'
-#'   oeratio represents the observed/expected ratio, where observed is the mean
-#'   of the outcomes in the pseudopopulation. The expected is the mean of the
-#'   predictions in the original observed population.
-#'
 #' @export
+#'
+#' @references Keogh RH, Van Geloven N. Prediction Under Interventions:
+#'   Evaluation of Counterfactual Performance Using Longitudinal Observational
+#'   Data. Epidemiology. 2024;35(3):329-339.
+#'
+#'   Boyer CB, Dahabreh IJ, Steingrimsson JA. Estimating and Evaluating
+#'   Counterfactual Prediction Models. Statistics in Medicine.
+#'   2025;44(23-24):e70287.
+#'
+#'   Pajouheshnia R, Peelen LM, Moons KGM, Reitsma JB, Groenwold RHH. Accounting
+#'   for treatment use when validating a prognostic model: a simulation study.
+#'   BMC Medical Research Methodology. 2017;17(1):103.
 #'
 #' @examples
 #' n <- 1000
@@ -95,11 +128,20 @@ CFscore <- function(object, data, outcome, treatment_formula,
                     bootstrap = 0, bootstrap_progress = TRUE,
                     iptw, ipcw, quiet = FALSE) {
 
+
+  # checking inputs ---------------------------------------------------------
+
   check_missing(object)
   check_missing(data)
   check_missing(outcome)
   check_missing(treatment_formula)
   check_missing(treatment_of_interest)
+
+  if (cens_model == "KM")
+    stopifnot("censoring model must be ~ 1 if modeled via KM" =
+                rhs_is_one(cens_formula))
+
+
 
   metrics <- match.arg(
     arg = metrics,
@@ -110,14 +152,16 @@ CFscore <- function(object, data, outcome, treatment_formula,
 
   # assert treatment is binary
   # assert non-surival outcome is binary
-  # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights) handle
-  # formulas in general (lhs is 1 term, ...) assert longest surv time is longer
-  # than time horizon, to avoid annoying weights
+  # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights)
+  # handle formulas in general (lhs is 1 term, ...)
+  # assert longest surv time is longer than time horizon, to avoid annoying
+  #weights
 
   if (bootstrap != 0)
     stopifnot("can't bootstrap if iptw are given" = missing(iptw))
 
-  # more input checking, move to seperate function
+
+  # done checking most input ------------------------------------------------
 
   cfscore <- list()
 
@@ -146,6 +190,8 @@ CFscore <- function(object, data, outcome, treatment_formula,
     X = object,
     FUN = function(x) {
       if (is.numeric(x) && is.null(dim(x))) {
+        stopifnot("Predictions must be of length nrow(data)" =
+                    length(x) == nrow(data))
         x # user supplied risk predictions
       } else {
         predict_CF(
@@ -170,7 +216,8 @@ CFscore <- function(object, data, outcome, treatment_formula,
     cfscore$ipt$model <- ipt$model
 
     if (stable_iptw == TRUE) {
-      stable_treatment_formula <- stats::update.formula(treatment_formula, . ~ 1)
+      stable_treatment_formula <-
+        stats::update.formula(treatment_formula, . ~ 1)
       sipt <- ipt_weights(data, stable_treatment_formula)
       iptw <- 1/sipt$weights * iptw
       cfscore$ipt$stable_model <- sipt$model
@@ -322,7 +369,8 @@ extract_outcome <- function(data, outcome) {
     }
   )
 
-  if (!( (is.numeric(y) && is.vector(y)) || inherits(y, "Surv") )) {
+  if (!( ((is.numeric(y) || is.logical(y)) && is.vector(y)) ||
+         inherits(y, "Surv") )) {
     stop("Outcome must be a numeric vector or a Surv object", call. = FALSE)
   }
 
