@@ -294,41 +294,32 @@ CFscore <- function(object, data, outcome, treatment_formula,
 
 get_metrics <- function(cfscore) {
   score <- list()
+
   if (cfscore$outcome_type == "survival") {
-    for (m in cfscore$metrics) {
-      score[[m]] <- sapply(
-        X = cfscore$predictions,
-        FUN = function(x) {
-          cf_metric(
-            m,
-            obs_outcome = cfscore$status_at_horizon,
-            obs_trt = cfscore$observed_treatment,
-            cf_pred = x,
-            cf_trt = cfscore$treatment_of_interest,
-            ipw = cfscore$ipt$weights * cfscore$ipc$weights,
-            nullpred = cfscore$predictions[["null model"]]
-          )
-        }
-      )
-    }
+    weights <- cfscore$ipt$weights * cfscore$ipc$weights
+    outcome <- cfscore$status_at_horizon
   } else {
-    for (m in cfscore$metrics) {
-      score[[m]] <- sapply(
-        X = cfscore$predictions,
-        FUN = function(x) {
-          cf_metric(
-            m,
-            obs_outcome = cfscore$outcome,
-            obs_trt = cfscore$observed_treatment,
-            cf_pred = x,
-            cf_trt = cfscore$treatment_of_interest,
-            ipw = cfscore$ipt$weights,
-            nullpred = cfscore$predictions[["null model"]]
-          )
-        }
-      )
-    }
+    weights <- cfscore$ipt$weights
+    outcome <- cfscore$outcome
   }
+
+  for (m in cfscore$metrics) {
+    score[[m]] <- sapply(
+      X = cfscore$predictions,
+      FUN = function(x) {
+        cf_metric(
+          m,
+          obs_outcome = outcome,
+          obs_trt = cfscore$observed_treatment,
+          cf_pred = x,
+          cf_trt = cfscore$treatment_of_interest,
+          ipw = weights,
+          nullpred = cfscore$predictions[["null model"]]
+        )
+      }
+    )
+  }
+
   score
 }
 

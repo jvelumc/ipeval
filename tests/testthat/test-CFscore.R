@@ -171,9 +171,9 @@ test_that("iptw/ipcw manual specification equivalent to models", {
   expect_equal(cf_model_iptw$score, cf_manual_iptw$score)
   expect_equal(cf_model_iptw$ipt$weights, cf_manual_iptw$ipt$weights)
 
-  cf_model_ipcw <- CFscore(predictions, data, Surv(time, status), A ~ L, 0,
+  cf_model_ipcw <- CFscore(predictions, data, survival::Surv(time, status), A ~ L, 0,
                            time_horizon = 5)
-  cf_manual_ipcw <- CFscore(predictions, data, Surv(time, status), A ~ L, 0,
+  cf_manual_ipcw <- CFscore(predictions, data, survival::Surv(time, status), A ~ L, 0,
                             time_horizon = 5, ipcw = cf_model_ipcw$ipc$weights)
 
   expect_equal(cf_model_ipcw$score, cf_manual_ipcw$score)
