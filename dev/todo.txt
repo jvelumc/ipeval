@@ -2,16 +2,15 @@ todo
 - CRAN
   - package name (CFeval?)
   x determine how to specify outcome & censoring mechanisms
-  - doc cfscore
+  x doc cfscore
   - readme
   - vignette
-  - iptw/ipcw manual specification tests
-  - refactor tests (define data once and reuse?)
   - print method fix
   - what else required for CRAN v1?
 - longitudinal trts
 - multiple censoring mechanisms
 - nonbinary treatments?
+- refactor tests?
 
 discuss
 - event/censor ties for cox censoring

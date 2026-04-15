@@ -219,6 +219,7 @@ CFscore <- function(object, data, outcome, treatment_formula,
     }
   }
   cfscore$ipt$weights <- iptw
+
   # get ipcw
   if (cfscore$outcome_type == "survival") {
     cfscore$ipc$method <- "weights manually specified"
