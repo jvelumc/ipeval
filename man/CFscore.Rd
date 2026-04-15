@@ -72,10 +72,10 @@ fitted using the data in which all subjects are counterfactually assigned
 the treatment of interest (using the IPTW, as estimated using the
 treatment_formula or as given by the iptw argument). For time-to-event
 outcomes, the subjects are also counterfactually uncensored (using the
-IPCW, as estimated using the outcome_formula, or as given by the ipcw
+IPCW, as estimated using the cens_formula, or as given by the ipcw
 argument).}
 
-\item{stable_iptw}{if TRUE, estimate stabilized IPTW weights. See details.}
+\item{stable_iptw}{if TRUE, estimate stabilized IPT-weights. See details.}
 
 \item{bootstrap}{If this is an integer greater than 0, this indicates the
 number of bootstrap iterations, to compute 95\% confidence intervals around
@@ -90,9 +90,9 @@ can be specified directly via this argument. If specified via this
 argument, bootstrap is not possible.}
 
 \item{ipcw}{A numeric vector, containing the inverse probability of censor
-weights. These are normally computed using the outcome_formula, but they
-can be specified directly via this argument. If specified via this
-argument, bootstrap is not possible.}
+weights. These are normally computed using the cens_formula, but they can
+be specified directly via this argument. If specified via this argument,
+bootstrap is not possible.}
 
 \item{quiet}{If set to TRUE, don't print assumptions.}
 }
@@ -101,8 +101,8 @@ A list with performance metrics.
 }
 \description{
 Estimates the predictive performance of predictions under interventions, by
-forming a weighted counterfactual population in which every subject was
-assigned the treatment of interest.
+forming a weighted pseudopopulation in which every subject was assigned the
+treatment of interest.
 }
 \details{
 When supplying a glm or coxph model, the model should be able to estimate
@@ -113,14 +113,21 @@ treatment. This function then automatically estimates the risk under the
 treatment of interest for all subjects, even if they were assigned
 alternative treatment.
 
-auc is area under the (ROC) curve, estimated ...
+All performance metrics are computed on the weighted population in which
+every subject was counterfactually assigned treatment of interest. \code{auc}
+is area under the (ROC) curve. Brier score is defined as \code{1 / sum(iptw)
+sum(predictions_i - outcome_i)^2}. Scaled brier score is also available
+(\code{metrics = "scaled_brier"}). For the O/E ratio, the numerator
+(observed) is the weighted fraction of events in the pseudopopulation, and
+the denominator (expected) is the unweighted mean of risk estimates of the
+original unweighted population. The \code{calplot} option generates a
+calibration plot, with default 8 knots. More/less knots can be specified by
+appending calplot with a number indicating the number of knots, e.g.
+\code{metrics = calplot10} for 10 knots.
 
-Brier score is defined as 1 / sum(iptw) sum(predictions_i - outcome_i)^2
-scaled brier score is also possible (metric = "scaled_brier")
-
-oeratio represents the observed/expected ratio, where observed is the mean of
-the outcomes in the pseudopopulation. The expected is the mean of the
-predictions in the original observed population.
+Stabilized IPT-weigths are computed by estimating a null model for treatment.
+E.g. weights are \code{P(A = a) / P(A = a | L = l)}, if the given
+treatment_formula is \code{A ~ L}.
 }
 \examples{
 n <- 1000
@@ -144,14 +151,13 @@ CFscore(
 \references{
 Keogh RH, Van Geloven N. Prediction Under Interventions:
   Evaluation of Counterfactual Performance Using Longitudinal Observational
-  Data. Epidemiology. 2024;35(3):329-339. doi:10.1097/EDE.0000000000001713
+  Data. Epidemiology. 2024;35(3):329-339.
 
   Boyer CB, Dahabreh IJ, Steingrimsson JA. Estimating and Evaluating
   Counterfactual Prediction Models. Statistics in Medicine.
-  2025;44(23-24):e70287. doi:10.1002/sim.70287
+  2025;44(23-24):e70287.
 
   Pajouheshnia R, Peelen LM, Moons KGM, Reitsma JB, Groenwold RHH. Accounting
   for treatment use when validating a prognostic model: a simulation study.
   BMC Medical Research Methodology. 2017;17(1):103.
-  doi:10.1186/s12874-017-0375-8
 }

@@ -142,8 +142,32 @@ test_that("supplying (list of) model or predictions equivalent", {
   )
 })
 
+test_that("iptw/ipcw manual specification equivalent to models", {
+  n <- 1000
+  adminstrative_censor <- 10
+  data <- data.frame(
+    L = rnorm(n, mean = 0),
+    P = rnorm(n, mean = 0)
+  )
+  data$A <- rbinom(n, 1, plogis(0.2 + 0.5*data$L))
 
-# TODO manual iptw/ipcw equivalent to equivalent models
+  data$time0 <- simulate_time_to_event(n, 0.04, data$L + 0.5*data$P)
+  data$time1 <- simulate_time_to_event(n, 0.04, data$L + 0.5*data$P - 0.6)
+  data$time_uncensored <- ifelse(data$A == 1, data$time1, data$time0)
+  data$status <- ifelse(data$time_uncensored <= adminstrative_censor, TRUE, FALSE)
+  data$time <- ifelse(data$status == TRUE, data$time_uncensored, adminstrative_censor)
+
+  predictions <- runif(n, 0, 1)
+
+  cf_model_iptw <- CFscore(predictions, data, status, A ~ L, 0)
+  cf_manual_iptw <- CFscore(predictions, data, status, A ~ 1, 0,
+                            iptw = cf_model_iptw$ipt$weights)
+  expect_equal(cf_model_iptw$score, cf_manual_iptw$score)
+  expect_equal(cf_model_iptw$ipt$weights, cf_manual_iptw$ipt$weights)
+
+
+})
+
 
 
 

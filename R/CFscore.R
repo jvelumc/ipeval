@@ -1,5 +1,3 @@
-library(survival)
-
 #' Counterfactual validation score
 #'
 #' Estimates the predictive performance of predictions under interventions, by
@@ -25,6 +23,10 @@ library(survival)
 #' calibration plot, with default 8 knots. More/less knots can be specified by
 #' appending calplot with a number indicating the number of knots, e.g.
 #' \code{metrics = calplot10} for 10 knots.
+#'
+#' Stabilized IPT-weigths are computed by estimating a null model for treatment.
+#' E.g. weights are \code{P(A = a) / P(A = a | L = l)}, if the given
+#' treatment_formula is \code{A ~ L}.
 #'
 #' @param object One of the following three options to be validated:
 #' \itemize{
@@ -67,7 +69,7 @@ library(survival)
 #'   outcomes, the subjects are also counterfactually uncensored (using the
 #'   IPCW, as estimated using the cens_formula, or as given by the ipcw
 #'   argument).
-#' @param stable_iptw if TRUE, estimate stabilized IPTW weights. See details.
+#' @param stable_iptw if TRUE, estimate stabilized IPT-weights. See details.
 #' @param bootstrap If this is an integer greater than 0, this indicates the
 #'   number of bootstrap iterations, to compute 95\% confidence intervals around
 #'   the performance metrics.
@@ -142,11 +144,9 @@ CFscore <- function(object, data, outcome, treatment_formula,
 
   cens_model <- match.arg(cens_model, choices = c("cox", "KM"))
 
-  # assert treatment is binary
   # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights)
-  # handle formulas in general (lhs is 1 term, ...)
   # assert longest surv time is longer than time horizon, to avoid annoying
-  #weights
+  # weights
 
   if (bootstrap != 0)
     stopifnot("can't bootstrap if iptw are given" = missing(iptw))
