@@ -55,11 +55,26 @@ test_that("wrong input throws sensible errors", {
     "no controls"
   )
 
+  # treatment
+  expect_error(
+    CFscore(predictions, data, status, A + B ~ L, 1),
+    "treatment formula must be one variable"
+  )
 
+  expect_error(
+    CFscore(predictions, data, status, ~ L, 1),
+    "treatment formula must be one variable"
+  )
 
+  expect_error(
+    CFscore(predictions, data, status, time ~ L, 1),
+    "Treatment is not binary"
+  )
 
-
-
+  expect_error(
+    CFscore(predictions, data, status, A ~ L, 2),
+    "Treatment_of_interest"
+  )
 })
 
 test_that("supplying (list of) model or predictions equivalent", {

@@ -152,8 +152,6 @@ CFscore <- function(object, data, outcome, treatment_formula,
     stopifnot("can't bootstrap if iptw are given" = missing(iptw))
 
 
-  # done checking most input ------------------------------------------------
-
   cfscore <- list()
 
   # get the observed outcome
@@ -174,6 +172,10 @@ CFscore <- function(object, data, outcome, treatment_formula,
   cfscore$treatment_column <- treatment_formula[[2]]
   cfscore$observed_treatment <- extract_lhs(data, treatment_formula)
   cfscore$treatment_of_interest <- treatment_of_interest
+  stopifnot("Treatment is not binary" =
+              setequal(unique(cfscore$observed_treatment), c(0,1)))
+  stopifnot("Treatment_of_interest must be either 0 or 1" =
+    treatment_of_interest == 0 || treatment_of_interest == 1)
 
   # make a list of risk predictions
   object <- make_list_if_not_list(object)

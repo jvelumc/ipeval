@@ -3,8 +3,16 @@ is.formula <- function(x) {
 }
 
 extract_lhs <- function(data, formula) {
-  mf <- stats::model.frame(formula, data)
-  unname(stats::model.response(mf))
+
+  # set rhs to 1, and lhs to . if its missing.
+  formula <- update.formula(formula, . ~ 1)
+
+  lhs <- formula[[2]]
+
+  if (lhs == "." || !is.symbol(lhs))
+    stop("Left hand side of treatment formula must be one variable")
+
+  eval(lhs, data, emptyenv())
 }
 
 rhs_is_one <- function(formula) {
