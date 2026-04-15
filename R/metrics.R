@@ -1,5 +1,11 @@
-
 cf_metric <- function(metric, ...) {
+
+  # Handle calplotX pattern
+  if (grepl("^calplot[0-9]+$", metric)) {
+    x <- as.numeric(sub("^calplot", "", metric))
+    return(cf_calplot(..., n = x))
+  }
+
   switch (metric,
     "brier" = cf_brier(...),
     "scaled_brier" = cf_brier_scaled(...),
@@ -7,7 +13,7 @@ cf_metric <- function(metric, ...) {
     "oeratio" = cf_oeratio(...),
     "oeratio_pp" = cf_oeratio_pp(...),
     "calplot" = cf_calplot(...),
-    stop(metric, " not implemented")
+    stop("Performance metric ", metric, " not implemented")
   )
 }
 
@@ -110,11 +116,11 @@ cf_oeratio_pp <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
 
 # # calibration plot
 
-cf_calplot <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, ...) {
+cf_calplot <- function(obs_outcome, obs_trt, cf_pred, cf_trt, ipw, n = 8, ...) {
 
   # it does not make sense to split the data into more groups than there is
   # unique data. E.g. for the null model, we want one group, not 8.
-  n_breaks <- min(8, length(unique(cf_pred)))
+  n_breaks <- min(n, length(unique(cf_pred)))
 
   cal <- data.frame(obs_outcome, obs_trt, cf_pred, ipw)
   cal <- cal[order(cf_pred), ]

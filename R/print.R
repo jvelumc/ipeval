@@ -10,7 +10,7 @@ print.CFscore <- function(x, ...) {
   if (x$quiet != TRUE) {
     assumptions(x)
   }
-  numeric_metrics <- x$metrics[x$metrics != "calplot"]
+  numeric_metrics <- x$metrics[!grepl("^calplot", x$metrics)]
 
   if (x$bootstrap_iterations != 0) {
     for (metric in numeric_metrics) {
@@ -30,7 +30,7 @@ print.CFscore <- function(x, ...) {
     print(tab, digits = 3, row.names = FALSE)
   }
 
-  if ("calplot" %in% x$metrics) {
+  if (grepl("calplot", x$metrics)) {
     plot(x, ...)
   }
 }

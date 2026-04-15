@@ -22,7 +22,9 @@ library(survival)
 #' (observed) is the weighted fraction of events in the pseudopopulation, and
 #' the denominator (expected) is the unweighted mean of risk estimates of the
 #' original unweighted population. The \code{calplot} option generates a
-#' calibration plot, with default 8 knots.
+#' calibration plot, with default 8 knots. More/less knots can be specified by
+#' appending calplot with a number indicating the number of knots, e.g.
+#' \code{metrics = calplot10} for 10 knots.
 #'
 #' oeratio represents the observed/expected ratio, where observed is the mean of
 #' the outcomes in the pseudopopulation. The expected is the mean of the
@@ -142,16 +144,9 @@ CFscore <- function(object, data, outcome, treatment_formula,
                 rhs_is_one(cens_formula))
 
 
-
-  metrics <- match.arg(
-    arg = metrics,
-    choices = c("auc", "brier", "scaled_brier", "oeratio", "calplot"),
-    several.ok = TRUE
-  )
   cens_model <- match.arg(cens_model, choices = c("cox", "KM"))
 
   # assert treatment is binary
-  # assert non-surival outcome is binary
   # assert rhs(outcome_formula != 1) iff surv model AND!missing(iptw_weights)
   # handle formulas in general (lhs is 1 term, ...)
   # assert longest surv time is longer than time horizon, to avoid annoying
