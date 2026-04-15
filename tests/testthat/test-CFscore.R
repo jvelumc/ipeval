@@ -24,10 +24,14 @@ test_that("wrong input throws sensible errors", {
   )
 
   expect_error(
-    CFscore(lm(status ~ A, data), data = data, outcome = status, A ~ L, 1)
+    CFscore(lm(status ~ A, data), data = data, outcome = status, A ~ L, 1),
+    "model class lm not supported"
   )
 
-
+  expect_error(
+    CFscore(runif(n, -1, 2), data = data, outcome = status, A ~ L, 1),
+    "Predictions must be in interval"
+  )
 
   # outcome -----------------------------------------------------------------
   expect_error(

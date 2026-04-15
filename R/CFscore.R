@@ -26,10 +26,6 @@ library(survival)
 #' appending calplot with a number indicating the number of knots, e.g.
 #' \code{metrics = calplot10} for 10 knots.
 #'
-#' oeratio represents the observed/expected ratio, where observed is the mean of
-#' the outcomes in the pseudopopulation. The expected is the mean of the
-#' predictions in the original observed population.
-#'
 #' @param object One of the following three options to be validated:
 #' \itemize{
 #'   \item a numeric vector, corresponding to risk predictions under
@@ -187,6 +183,8 @@ CFscore <- function(object, data, outcome, treatment_formula,
       if (is.numeric(x) && is.null(dim(x))) {
         stopifnot("Predictions must be of length nrow(data)" =
                     length(x) == nrow(data))
+        stopifnot("Predictions must be in interval [0,1]" =
+                    all(x >= 0) && all(x <= 1))
         x # user supplied risk predictions
       } else {
         predict_CF(

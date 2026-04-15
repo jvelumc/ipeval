@@ -15,10 +15,7 @@ data$iptw <- 1 / ifelse(data$A == 1, propensity_score, 1 - propensity_score)
 causal_model <- glm(Y ~ A + P, family = "binomial", data = data, weights = iptw)
 
 
-
-
-
-
+CFscore(causal_model, data, Y, A ~ L, 0, metrics = "calplot8")
 
 
 
