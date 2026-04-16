@@ -1,6 +1,7 @@
 todo
 - CRAN
-  - package name (CFeval?)
+  - package name (CFeval | ieval | iEval | inteval | IPeval | ipeval |
+                  intpredeval)
   x determine how to specify outcome & censoring mechanisms
   x doc cfscore
   - readme
