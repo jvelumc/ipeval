@@ -5,9 +5,13 @@ todo
   x determine how to specify outcome & censoring mechanisms
   x doc cfscore
   - readme
-  - vignette (JSS?)
   - print method fix
-  - what else required for CRAN v1?
+  - what elese required for CRAN v1?
+  - vignette from thesis chapter
+  - name change everywhere
+    - docs
+    - vignettes
+    - readme
 - longitudinal trts
 - multiple censoring mechanisms
 - nonbinary treatments?
