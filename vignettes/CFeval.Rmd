@@ -1,10 +1,13 @@
 ---
-title: "CFeval"
+title: "CFeval: an R package for validating predictions under interventions"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Right censored outcome data}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+author: Jasper W.A. van Egeraat, Ruth Keogh, Nan van Geloven
+bibliography: references.bib
+csl: nature.csl
 ---
   
 ```{r, include = FALSE}
@@ -14,142 +17,29 @@ comment = "#>"
 )
 ```
 
-```{r setup}
-library(CFeval)
-library(survival)
-```
+# Abstract
+We present the R package CFeval, which facilitates evaluation of predictive performance under hypothetical intervention settings using observational data. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions. It implements methods to assess counterfactual predictive performance using inverse probability of treatment weighting (IPTW).
 
-# Evaluating performance for time to event data.
-The README covers binary outcome. This vignette demonstrates how to estimate counterfactual performance metrics in right censored survival data. 
+# Introduction
 
-Just like in the binary outcome, a IPT-weighted pseudopopulation is built which represents a situation in which everybody gets the treatment level of interest. On top of that, inverse probability of censoring weights are used such that the pseudopopulation also represents a situation where nobody gets censored. 
+Certain prediction models aim to estimate an individual’s risk under hypothetical intervention scenarios. These are referred to as interventional prediction models or models for prediction under interventions (where intervention can e.g. be a certain medical treatment but could also be a certain behavioral change or health policy). @keoghPredictionInterventionsEvaluation2024 For example, a model may estimate a patient’s risk if untreated, if undergoing surgery, or if initiating medication.[@score2workinggroupandesccardiovascularriskcollaborationSCORE2RiskPrediction2021; @nashefEuroSCOREII2012; @obrienORBITBleedingScore2015] Models may also facilitate risk predictions under several treatment options. @hagemanEstimationRecurrentAtherosclerotic2022
 
-## Example 1, non informative censoring
+Because such predictions under interventions are often intended to inform medical decision-making, rigorous validation is essential. In standard prediction settings, validation involves comparing estimated risks with observed outcomes in a validation dataset. This approach is not directly applicable to predictions under interventions in observational data. Each individual typically receives only one intervention, and outcomes that they would have had under alternative interventions remain unobserved. These are referred to as counterfactual outcomes in causal inference terminology. @hernanCausalInferenceWhat
 
-We simulate some time-to-event data, where approximately half of patients get censored.
+When models are used to guide treatment decisions, their performance must be evaluated across all relevant intervention options for each individual, not only the observed intervention option.[@keoghPredictionInterventionsEvaluation2024; @boyerEstimatingEvaluatingCounterfactual2025b; @pajouheshniaAccountingTreatmentUse2017] Because clinicians generally assign treatments based on patient characteristics, treatment groups may not be comparable. Because of this, a model that accurately estimates the risk of a patient under treatment may not perform well estimating their counterfactual risk under no treatment, even if the model also performs well in the group of patients that were actually untreated.
 
-```{r}
-simulate_time_to_event <- function(n, constant_baseline_haz, LP) {
-  u <- runif(n)
-  -log(u) / (constant_baseline_haz * exp(LP))
-}
+Evaluating performance of the predictions under only the observed treatments reflects predictive performance under the historical treatment assignment mechanism present in the observed data. If such models are used to inform treatment decisions in new patients, the treatment assignment mechanism may change, rendering conventional performance measures less relevant. In fact, a model that performs well under historical treatment assignment mechanism can lead to harmful decisions when applied to new patients. @amsterdamWhenAccuratePrediction2025
 
-# horizon <- 10
-# n <- 10000
+The appropriate target is counterfactual predictive performance: the agreement between estimated risks and the outcomes that would be observed if all individuals were assigned the specific intervention option of interest. For example, how well do estimated risks align with outcomes in a hypothetical scenario where all patients receive treatment? Despite its importance, a recent review indicates that this type of validation is rarely conducted. @linScopingReviewCausal2021 This package addresses this gap by providing tools to perform such evaluations for binary and time-to-event outcomes, based on the work of Keogh and Van Geloven (2024). @keoghPredictionInterventionsEvaluation2024
 
-simulate_data <- function(n, seed) {
-  set.seed(seed)
-  data <- data.frame(
-    L1 = rnorm(n),
-    L2 = rbinom(n, 1, 0.5),
-    P1 = rnorm(n),
-    P2 = rbinom(n, 1, 0.5)
-  )
-  data$A <- rbinom(n, 1, plogis(0.2 + 1.2*data$L1 - 0.3*data$L2))
-  
-  LP <- 0.8*data$L1 + 0.3*data$L2 + 0.5*data$P1 + 0.7*data$P2
-  
-  # time_0 is the uncensored untreated survival time,
-  # time_1 is the uncensored treated   survival time 
-  data$time_0 <- simulate_time_to_event(n, 0.04, LP)
-  data$time_1 <- simulate_time_to_event(n, 0.04, LP - 0.5)
-  
-  # time_A is the uncensored survival time corresponding to assigned treatment 
-  data$time_A <- ifelse(data$A == 1, data$time_1, data$time_0)
-  
-  # uninformative censoring
-  data$censor_time <- simulate_time_to_event(n, 0.05, 0)
-  
-  # in practice, we only observe (time, status):
-  data$status <- ifelse(data$time_A <= data$censor_time, TRUE, FALSE)
-  data$time <- ifelse(data$status == TRUE,
-                      data$time_A,
-                      data$censor_time)
-  return(data)
-}
+# Methods
+The implementation uses the observed validation data to approximate a counterfactual dataset representing a population in which all individuals receive a specified treatment option. This is achieved via inverse probability of treatment weighting (IPTW). Each individual is weighted by the inverse of the probability of receiving their observed treatment conditional on confounders. This reweighting allows individuals who received a given treatment to represent similar individuals who did not receive this treatment. Validity of this approach relies on standard causal assumptions: conditional exchangeability, consistency, positivity, and correct specification of the treatment model. More details are given elsewhere.[@keoghPredictionInterventionsEvaluation2024; @hernanCausalInferenceWhat; @boyerEstimatingEvaluatingCounterfactual2025b]
 
-df_dev <- simulate_data(n = 10000, seed = 123)
-
-summary(df_dev$time)
-summary(df_dev$status)
-```
-Fit some models to validate:
-
-```{r}
-model_naive <- coxph(
-  formula = Surv(time, status) ~ P1 + P2 + A,
-  data = df_dev
-)
-
-coefficients(model_naive)
-
-trt_model <- glm(A ~ L1 + L2, family = "binomial", data = df_dev)
-propensity_score <- predict(trt_model, type = "response")
-
-df_dev$iptw <- 1 / ifelse(df_dev$A == 1, propensity_score, 1 - propensity_score)
-
-model_causal <- coxph(
-  formula = Surv(time, status) ~ P1 + P2 + A,
-  data = df_dev,
-  weights = iptw
-)
-
-coefficients(model_causal)
-```
-The naive model estimates higher risk for treated patients than for untreated patients. The causal model correctly infers that treatment benefits patients. Note that the 'true' effect of $A$ was generated within a model that also conditions on $L1$ and $L2$. Due to non-collapsibility, the estimated coefficient is not expected to coincide with the effect used in the data-generating mechanism.
-
-We also simulate some validation data. In this example, we use the same data generating mechanism. We are interested in the predictive performance if every patient were to be assigned to treatment and remained uncensored, with a prediction horizon of 5 years. 
-
-```{r}
-df_val <- simulate_data(10000, 234)
-```
-
-To account for the time to event data, we specify a survival object as the outcome. As we have non-informative censoring in this example, we specify our censoring model to be estimated with Kaplan-Meier:
-
-```{r, fig.width=6, fig.height=6}
-cfs <- CFscore(
-  object = list("naive model" = model_naive, "causal model" = model_causal),
-  data = df_val,
-  outcome = Surv(time, status),
-  treatment_formula = A ~ L1 + L2,
-  treatment_of_interest = 1,
-  time_horizon = 5,
-  cens_model = "KM"
-)
-cfs
-```
-
-## Example 2, informative censoring
-We can also account for informative censoring. In this example, we keep the same prediction model as in example 1, but add an informative-censoring mechanism to the validation dataset.
-
-```{r}
-df_val$censortime <- simulate_time_to_event(10000, 0.04, 0.1*df_val$L1 + 0.5*df_val$P2)
-summary(df_val$censortime)
-
-df_val$status <- ifelse(df_val$time_A <= df_val$censortime, TRUE, FALSE)
-df_val$time <- ifelse(df_val$status == TRUE,
-                      df_val$time_A,
-                      df_val$censortime)
-
-summary(df_val$time)
-summary(df_val$status)
-```
-
-We then set censoring method to "cox", and supply the formula needed for the censoring model as the right hand side of cens_formula. Internally, the censoring distribution is estimated with this expression, from which the inverse probability of **censoring** weights are computed, which are then combined with the inverse probability of **treatment** weights. These combined weights are used to represent a population in which every patient was treated and remained uncensored.
-
-```{r, fig.width=6, fig.height=6}
-CFscore(
-  object = list("naive model" = model_naive, "causal model" = model_causal),
-  data = df_val,
-  outcome = Surv(time, status),
-  treatment_formula = A ~ L1 + L2,
-  treatment_of_interest = 1,
-  time_horizon = 5,
-  cens_model = "cox",
-  cens_formula = ~ L1 + P2,
-  bootstrap = 100,
-  bootstrap_progress = FALSE
-)
-```
+Predictive performance under a given intervention is then evaluated by comparing estimated risks with observed outcomes in the weighted (pseudo-)population. The package supports the following performance metrics: area under the receiver operating characteristic curve (AUC), Brier score, observed-expected (O/E) ratio, and calibration plots.
 
 
+
+# Illustration
+
+
+# References

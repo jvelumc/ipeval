@@ -82,7 +82,7 @@ observed_score(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   metrics = c("auc", "brier", "oeratio")
 )
 ```
@@ -108,7 +108,7 @@ CFscore(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0
 )
@@ -123,7 +123,7 @@ CFscore(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 1,
   quiet = TRUE
@@ -145,7 +145,7 @@ CFscore(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0,
   bootstrap = 50,

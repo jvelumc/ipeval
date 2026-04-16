@@ -108,7 +108,7 @@ observed_score(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   metrics = c("auc", "brier", "oeratio")
 )
 #> 
@@ -164,20 +164,19 @@ CFscore(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0
 )
 #> Estimation of the performance of the prediction model in a
 #>  counterfactual (CF) dataset where everyone's treatment A was set to 0.
 #> The following assumptions must be satisfied for correct inference:
-#> - Conditional exchangeability requires that given IP-weights are
-#>  sufficient to adjust for confounding and selection bias between
+#> - Conditional exchangeability requires that the inverse probability of
+#>  treatment weights are sufficient to adjust for confounding between
 #>  treatment and outcome.
-#> - Positivity (assess $ipt$weights for outliers)
-#> - Consistency
-#> - No interference
-#> - Correctly specified propensity formula. Estimated treatment model is
+#> - Conditional positivity (assess $ipt$weights for outliers)
+#> - Consistency (including no interference)
+#> - Correctly specified propensity model. Estimated treatment model is
 #>  logit(A) = -0.07 + 2.05*L. See also $ipt$model
 #> 
 #>         model   auc brier oeratio
@@ -200,7 +199,7 @@ CFscore(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 1,
   quiet = TRUE
@@ -237,7 +236,7 @@ CFscore(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0,
   bootstrap = 50,

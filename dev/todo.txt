@@ -5,7 +5,7 @@ todo
   x determine how to specify outcome & censoring mechanisms
   x doc cfscore
   - readme
-  - vignette
+  - vignette (JSS?)
   - print method fix
   - what else required for CRAN v1?
 - longitudinal trts
