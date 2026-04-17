@@ -138,7 +138,12 @@ assumptions <- function(x) {
   }
 
   if (x$outcome_type == "survival") {
-    pp("- Censoring is accounted for with ... ")
+    switch(x$ipc$method,
+    KM = pp("- Non-informative censoring. See also $ipc"),
+    cox = pp(" - Correctly specified censoring model. Estimated censoring
+      distribution is ", print_censor_model(x$ipc$model), ". See also $ipc"),
+    pp("- Correct IPC-weights (as manually specified)")
+    )
   }
 }
 
@@ -159,4 +164,12 @@ print_model <- function(model) {
 
   formula <- paste(lhs, rhs, sep = " = ")
   formula
+}
+
+print_censor_model <- function(cox) {
+
+  var_names <- names(cox$coefficients)
+  coef <- round(unname(cox$coefficients), 2)
+  LP <- paste(coef, var_names, sep = "*", collapse = " + ")
+  paste0("P(C > t) = C_0(t)^exp(", LP, ")")
 }
