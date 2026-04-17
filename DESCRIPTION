@@ -1,6 +1,6 @@
-Package: CFeval
+Package: ipeval
 Type: Package
-Title: Evaluation of Counterfactual Performance
+Title: Evaluation of Interventional Predictions 
 Version: 0.0.1
 Authors@R: c(
     person(
@@ -17,11 +17,15 @@ Authors@R: c(
       role = "aut"
     )
   )
-Description: Predictions under interventions are estimates of what a subject's risk would be 
-  if they were to follow a certain counterfactual treatment. Assessing predictive performance
-  for these predictions is challenging, as only the outcome of the realized treatment can be
-  observed.(Keogh, van Geloven, DOI 10.1097/EDE.0000000000001713). This R package facilitates 
-  assessing counterfactual performance of interventional predictions. 
+Description: Provides methods to evaluate predictive performance of models that 
+    estimate risks under hypothetical intervention scenarios (interventional/
+    causal/counterfactual predictions) with observational data. Inverse 
+    probability of treatment weighting (IPTW) is used to construct a 
+    pseudopopulation in which all individuals receive a specified intervention, 
+    enabling assessment of agreement between predicted risks and observed 
+    outcomes under that intervention. Supports binary and time-to-event outcomes
+    under binary interventions, with performance measures including AUC, Brier 
+    score, observed-expected ratio, and calibration plots.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true

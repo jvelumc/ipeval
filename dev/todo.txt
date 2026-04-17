@@ -1,7 +1,6 @@
 todo
 - CRAN
-  - package name (CFeval | ieval | iEval | inteval | IPeval | ipeval |
-                  intpredeval)
+  - package name (ipeval)
   x determine how to specify outcome & censoring mechanisms
   x doc cfscore
   - readme
@@ -12,6 +11,7 @@ todo
     - docs
     - vignettes
     - readme
+    - description
 - longitudinal trts
 - multiple censoring mechanisms
 - nonbinary treatments?
