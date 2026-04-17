@@ -1,4 +1,4 @@
-# CFeval
+# ipeval
 
 Prediction under interventions considers estimating what a subject’s
 risk would be if they were to receive a certain treatment. Likewise one
@@ -12,16 +12,16 @@ predictions.
 
 ## Installation
 
-You can install the development version of CFeval from
+You can install the development version of ipeval from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("jvelumc/CFeval")
+devtools::install_github("jvelumc/ipeval")
 ```
 
 ``` r
-library(CFeval)
+library(ipeval)
 ```
 
 ## Example
@@ -103,7 +103,7 @@ observed_score(
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   metrics = c("auc", "brier", "oeratio")
 )
 #> 
@@ -133,10 +133,10 @@ The question that we would like to have answered is the following:
 How well does our prediction model perform if we were to treat nobody?
 And if we were to treat everybody?
 
-The CFeval package aims to provide tools to answer questions like these.
+The ipeval package aims to provide tools to answer questions like these.
 The main function
-[`CFscore()`](https://jvelumc.github.io/CFeval/reference/CFscore.md) can
-be used for this. This function estimates several counterfactual
+[`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
+can be used for this. This function estimates several counterfactual
 performance measures in a validation dataset, printing by default the
 assumptions required for valid inference. The first argument is the
 object to validate. This can be a glm model, a coxph model for survival
@@ -153,27 +153,26 @@ assigned to that treatment.
 If nobody would have been treated:
 
 ``` r
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive model" = naive_model,
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0
 )
 #> Estimation of the performance of the prediction model in a
 #>  counterfactual (CF) dataset where everyone's treatment A was set to 0.
 #> The following assumptions must be satisfied for correct inference:
-#> - Conditional exchangeability requires that given IP-weights are
-#>  sufficient to adjust for confounding and selection bias between
+#> - Conditional exchangeability requires that the inverse probability of
+#>  treatment weights are sufficient to adjust for confounding between
 #>  treatment and outcome.
-#> - Positivity (assess $ipt$weights for outliers)
-#> - Consistency
-#> - No interference
-#> - Correctly specified propensity formula. Estimated treatment model is
+#> - Conditional positivity (assess $ipt$weights for outliers)
+#> - Consistency (including no interference)
+#> - Correctly specified propensity model. Estimated treatment model is
 #>  logit(A) = -0.07 + 2.05*L. See also $ipt$model
 #> 
 #>         model   auc brier oeratio
@@ -189,14 +188,14 @@ And similarly, if everybody would have been treated (not printing the
 assumptions again):
 
 ``` r
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive model" = naive_model,
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 1,
   quiet = TRUE
@@ -221,19 +220,19 @@ pseudopopulation where we counterfactually set everyone’s treatment
 status to $0$). While the models have different coefficients for P,
 individuals are ranked in exactly the same way.
 
-$CFscore{()}$ also supports stabilized weights and bootstrapping for
+$ip_{s}core{()}$ also supports stabilized weights and bootstrapping for
 confidence intervals. Right censored survival data and cox models are
 also supported.
 
 ``` r
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive model" = naive_model,
     "causal model" = causal_model
   ),
   data = df_val, 
-  outcome_formula = Y ~ 1,
+  outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 0,
   bootstrap = 50,
@@ -273,16 +272,19 @@ CFscore(
 
 ## All functions
 
-- [`CFscore()`](https://jvelumc.github.io/CFeval/reference/CFscore.md) :
-  Counterfactual validation score
-- [`observed_score()`](https://jvelumc.github.io/CFeval/reference/observed_score.md)
+- [`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
+  : Counterfactual validation score
+- [`observed_score()`](https://jvelumc.github.io/ipeval/reference/observed_score.md)
   : Performance in observed dataset This function exists only to
   demonstrate the difference between 'normal' performance and
   counterfactual performance. It is not user friendly and should not be
-  used.
+  relied on. It does not support cox models out of the box.
 
 # Articles
 
 ### All vignettes
 
-- [CFeval](https://jvelumc.github.io/CFeval/articles/CFeval.md):
+- [ipeval: an R package for validating predictions under
+  interventions](https://jvelumc.github.io/ipeval/articles/ipeval.md):
+- [Evaluating performance in time-to-event
+  data](https://jvelumc.github.io/ipeval/articles/time-to-event.md):

@@ -10,14 +10,14 @@
 
 ## Citation
 
-van Egeraat J, van Geloven N, Keogh R (2026). *CFeval: Evaluation of
-Counterfactual Performance*. R package version 0.0.1,
-<https://jvelumc.github.io/CFeval/>.
+van Egeraat J, van Geloven N, Keogh R (2026). *ipeval: Evaluation of
+Interventional Predictions*. R package version 0.0.1,
+<https://jvelumc.github.io/ipeval/>.
 
     @Manual{,
-      title = {CFeval: Evaluation of Counterfactual Performance},
+      title = {ipeval: Evaluation of Interventional Predictions},
       author = {Jasper {van Egeraat} and Nan {van Geloven} and Ruth Keogh},
       year = {2026},
       note = {R package version 0.0.1},
-      url = {https://jvelumc.github.io/CFeval/},
+      url = {https://jvelumc.github.io/ipeval/},
     }

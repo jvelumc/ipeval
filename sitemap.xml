@@ -1,12 +1,13 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>https://jvelumc.github.io/CFeval/404.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/LICENSE.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/articles/CFeval.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/articles/index.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/authors.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/index.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/reference/CFscore.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/reference/index.html</loc></url>
-<url><loc>https://jvelumc.github.io/CFeval/reference/observed_score.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/404.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/LICENSE.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/articles/index.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/articles/ipeval.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/articles/time-to-event.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/authors.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/index.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/reference/index.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/reference/ip_score.html</loc></url>
+<url><loc>https://jvelumc.github.io/ipeval/reference/observed_score.html</loc></url>
 </urlset>
 

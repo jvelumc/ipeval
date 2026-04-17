@@ -2,8 +2,9 @@ pandoc: 3.1.11
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
-  CFeval: CFeval.html
-last_built: 2026-02-22T17:46Z
+  ipeval: ipeval.html
+  time-to-event: time-to-event.html
+last_built: 2026-04-17T10:52Z
 urls:
-  reference: https://jvelumc.github.io/CFeval/reference
-  article: https://jvelumc.github.io/CFeval/articles
+  reference: https://jvelumc.github.io/ipeval/reference
+  article: https://jvelumc.github.io/ipeval/articles
