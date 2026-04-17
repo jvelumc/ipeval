@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(CFeval)
+library(ipeval)
 
-test_check("CFeval")
+test_check("ipeval")

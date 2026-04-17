@@ -36,7 +36,7 @@ where $E[$risk$]$ is the estimated risk (from model M) in the original full popu
 In many cases these two methods seemed equivalent and computed the same result. However, in this example it can be shown they are not, and we see which definition should be used. Henceforth, I will call the O/E ratio based on option 1 $oeratio$, and the ratio based on option 2 $oeratio\_pp$.
 
 ```{r}
-library(CFeval)
+library(ipeval)
 
 n <- 10000
 

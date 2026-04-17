@@ -1,5 +1,5 @@
 ---
-title: "CFeval: an R package for validating predictions under interventions"
+title: "ipeval: an R package for validating predictions under interventions"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Right censored outcome data}
@@ -18,7 +18,7 @@ comment = "#>"
 ```
 
 # Abstract
-We present the R package CFeval, which facilitates evaluation of predictive performance under hypothetical intervention settings using observational data. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions. It implements methods to assess counterfactual predictive performance using inverse probability of treatment weighting (IPTW).
+We present the R package ipeval, which facilitates evaluation of predictive performance under hypothetical intervention settings using observational data. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions. It implements methods to assess counterfactual predictive performance using inverse probability of treatment weighting (IPTW).
 
 # Introduction
 

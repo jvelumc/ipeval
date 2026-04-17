@@ -3,10 +3,10 @@ output:
   pdf_document:
     keep_tex: true
 ---
-# CFeval: an R package for validating predictions under interventions
+# ipeval: an R package for validating predictions under interventions
 
 # Abstract
-We present the R package CFeval, which facilitates evaluation of predictive performance for predictions under interventions using observational data. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions. It implements methods to assess counterfactual predictive performance using inverse probability of treatment weighting (IPTW).
+We present the R package ipeval, which facilitates evaluation of predictive performance for predictions under interventions using observational data. The package currently supports binary outcomes and time-to-event outcomes under binary (point) interventions. It implements methods to assess counterfactual predictive performance using inverse probability of treatment weighting (IPTW).
 
 # Introduction
 
@@ -18,7 +18,7 @@ When models are used to guide treatment decisions, it is necessary to assess the
 
 The goal, therefore, is to assess counterfactual predictive performance, defined as the agreement between predicted risks and the outcomes that would be observed if all individuals were assigned a specific intervention.
 
-The CFeval package provides tools to perform such evaluations for binary and time-to-event outcomes.
+The ipeval package provides tools to perform such evaluations for binary and time-to-event outcomes.
 
 # Methods
 The implementation follows previously proposed methods and uses the observed validation data to approximate a counterfactual dataset representing a population in which all individuals receive a specified treatment.
@@ -31,7 +31,7 @@ Predictive performance under a given intervention is then evaluated by comparing
 
 # Illustration
 ```{r, echo=FALSE}
-library(CFeval)
+library(ipeval)
 ```
 
 To demonstrate package functionality, we require a validation dataset and interventional predictions to validate. We simulate data with binary treatment $A$, binary outcome $Y$, continuous confounder $L$ and an additional predictor $P$ (see Figure 1). Treatment assignment depends on $L$, and treatment has a protective effect on the outcome. Table 1 shows the first few rows of the data. 
@@ -109,7 +109,7 @@ What we really seek to evaluate is whether both untreated risk and treated risk 
 
 How well does our prediction model perform if we were to treat nobody? And if we were to treat everybody?
 
-The CFeval package aims to provide tools to answer questions like these. The main function CFscore() can be used for this. This function estimates several counterfactual performance measures in a validation dataset, printing by default the assumptions required for valid inference. 
+The ipeval package aims to provide tools to answer questions like these. The main function CFscore() can be used for this. This function estimates several counterfactual performance measures in a validation dataset, printing by default the assumptions required for valid inference. 
 
 Comparing the untreated risk to the counterfactual outcomes under no treatment:
 
@@ -156,4 +156,4 @@ This example highlights a fundamental issue: a model that performs well under th
 It should be noted that counterfactual performance estimation remains dependent on standard causal assumptions. Violations, such as unmeasured confounding or model misspecification, may lead to biased estimates.
 
 ## Future directions
-Many prediction models intended for decision support are not currently validated within a counterfactual framework. By providing accessible implementations of these methods, CFeval aims to facilitate more appropriate validation practices. Future developments will focus on extending the package to longitudinal treatment strategies, where time-dependent confounding arises, and to settings involving competing risks.
+Many prediction models intended for decision support are not currently validated within a counterfactual framework. By providing accessible implementations of these methods, ipeval aims to facilitate more appropriate validation practices. Future developments will focus on extending the package to longitudinal treatment strategies, where time-dependent confounding arises, and to settings involving competing risks.

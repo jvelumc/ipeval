@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 
 ```{r setup}
-library(CFeval)
+library(ipeval)
 library(survival)
 ```
 
