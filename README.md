@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# CFeval <!-- badges: start --> <!-- badges: end -->
+# ipeval <!-- badges: start --> <!-- badges: end -->
 
 Prediction under interventions considers estimating what a subject’s
 risk would be if they were to receive a certain treatment. Likewise one
@@ -15,16 +15,16 @@ predictions.
 
 ## Installation
 
-You can install the development version of CFeval from
+You can install the development version of ipeval from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("jvelumc/CFeval")
+devtools::install_github("jvelumc/ipeval")
 ```
 
 ``` r
-library(CFeval)
+library(ipeval)
 ```
 
 ## Example
@@ -138,7 +138,7 @@ The question that we would like to have answered is the following:
 How well does our prediction model perform if we were to treat nobody?
 And if we were to treat everybody?
 
-The CFeval package aims to provide tools to answer questions like these.
+The ipeval package aims to provide tools to answer questions like these.
 The main function `CFscore()` can be used for this. This function
 estimates several counterfactual performance measures in a validation
 dataset, printing by default the assumptions required for valid
@@ -186,7 +186,7 @@ CFscore(
 #>  causal model 0.766 0.196    1.00
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-8-1.png" alt="" width="100%" />
 
 And similarly, if everybody would have been treated (not printing the
 assumptions again):
@@ -212,7 +212,7 @@ CFscore(
 #>  causal model 0.739 0.202   0.930
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-9-1.png" alt="" width="100%" />
 
 As we see, the causal model has best calibration and Brier score.
 
@@ -270,4 +270,4 @@ CFscore(
 #>  causal model    1.00 0.949  1.05
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" /><img src="man/figures/README-unnamed-chunk-10-2.png" width="100%" /><img src="man/figures/README-unnamed-chunk-10-3.png" width="100%" /><img src="man/figures/README-unnamed-chunk-10-4.png" width="100%" /><img src="man/figures/README-unnamed-chunk-10-5.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-10-1.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-10-2.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-10-3.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-10-4.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-10-5.png" alt="" width="100%" />
