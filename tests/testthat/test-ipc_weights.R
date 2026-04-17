@@ -55,12 +55,6 @@ test_that("ipc KM simple correct", {
     c(0,1.5,0)
   )
 
-  data <- data.frame(
-    time <- c(1,2,3),
-    cfscore_time = c(1,2,3),
-    status = c(0,1,0)
-  )
-
 })
 
 # tests with some survival ties (one has outcome, one is censor at same t)

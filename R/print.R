@@ -6,7 +6,7 @@ pp <- function(...) {
 
 
 #' @export
-print.CFscore <- function(x, ...) {
+print.ip_score <- function(x, ...) {
   if (x$quiet != TRUE) {
     assumptions(x)
   }
@@ -36,7 +36,7 @@ print.CFscore <- function(x, ...) {
 }
 
 #' @export
-plot.CFscore <- function(x, ...) {
+plot.ip_score <- function(x, ...) {
   # this plotting function should ideally be more customizable,
   # i.e. show/hide legend, colors, xlim, ylim, ....
 

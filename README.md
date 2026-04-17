@@ -139,7 +139,7 @@ How well does our prediction model perform if we were to treat nobody?
 And if we were to treat everybody?
 
 The ipeval package aims to provide tools to answer questions like these.
-The main function `CFscore()` can be used for this. This function
+The main function `ip_score()` can be used for this. This function
 estimates several counterfactual performance measures in a validation
 dataset, printing by default the assumptions required for valid
 inference. The first argument is the object to validate. This can be a
@@ -157,7 +157,7 @@ treatment.
 If nobody would have been treated:
 
 ``` r
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive model" = naive_model,
@@ -192,7 +192,7 @@ And similarly, if everybody would have been treated (not printing the
 assumptions again):
 
 ``` r
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive model" = naive_model,
@@ -224,12 +224,12 @@ pseudopopulation where we counterfactually set everyone’s treatment
 status to $0$). While the models have different coefficients for P,
 individuals are ranked in exactly the same way.
 
-$CFscore()$ also supports stabilized weights and bootstrapping for
+$ip_score()$ also supports stabilized weights and bootstrapping for
 confidence intervals. Right censored survival data and cox models are
 also supported.
 
 ``` r
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive model" = naive_model,

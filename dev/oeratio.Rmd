@@ -59,7 +59,7 @@ causal_perfect <- data$Y0
 How well calibrated should each model be in a world where we would have treated nobody? The model that perfectly predicts $Y0$ should have O/E ratio equal to $1.0$. The naive model should not be well-calibrated, because it predicts the outcome under some prespecified treatment assignment strategy, whereas we are estimating the performance of the model in a population that follows a different treatment assignment strategy (nobody gets treatment).  
 
 ```{r}
-CFscore(
+ip_score(
   object = list(
     "random" = random_predictions,
     "naive" = naive_perfect, 

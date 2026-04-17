@@ -22,19 +22,19 @@
 observed_score <- function(object, data, outcome,
                     metrics = c("auc", "brier", "oeratio", "calplot")) {
 
-  cfscore <- list()
+  score <- list()
 
   # get the observed outcome
-  cfscore$outcome <- extract_outcome(data, substitute(outcome))
-  if (inherits(cfscore$outcome, "Surv")) {
+  score$outcome <- extract_outcome(data, substitute(outcome))
+  if (inherits(score$outcome, "Surv")) {
     stop("This function does not support survival data")
   } else {
-    cfscore$outcome_type <- "binary"
+    score$outcome_type <- "binary"
   }
 
   # make a list of risk predictions
   object <- make_list_if_not_list(object)
-  cfscore$predictions <- lapply(
+  score$predictions <- lapply(
     X = object,
     FUN = function(x) {
       if (is.numeric(x) && is.null(dim(x))) {
@@ -45,18 +45,18 @@ observed_score <- function(object, data, outcome,
     }
   )
 
-  cfscore$ipt$weights <- rep(1, nrow(data))
-  cfscore$observed_treatment <- rep(1, nrow(data))
-  cfscore$treatment_of_interest <- 1
-  cfscore$metrics <- metrics
-  cfscore$score <- get_metrics(cfscore)
-  cfscore$bootstrap_iterations <- 0
-  cfscore$quiet <- TRUE
+  score$ipt$weights <- rep(1, nrow(data))
+  score$observed_treatment <- rep(1, nrow(data))
+  score$treatment_of_interest <- 1
+  score$metrics <- metrics
+  score$score <- get_metrics(score)
+  score$bootstrap_iterations <- 0
+  score$quiet <- TRUE
   # rearrange such that score is the first entry of the list
   front <- c("score")
-  cfscore <- cfscore[c(front, setdiff(names(cfscore), front))]
-  class(cfscore) <- "CFscore"
+  score <- score[c(front, setdiff(names(score), front))]
+  class(score) <- "ip_score"
 
-  return(cfscore)
+  return(score)
 
 }

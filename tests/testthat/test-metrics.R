@@ -344,7 +344,7 @@ test_that(
       with(data[data$A == 0,], 1/sum(w) * sum((predictions - Y)^2 * w))
     )
     expect_equal(
-      unname(CFscore(data$predictions, data, Y, A ~ L, 0, metrics = "brier",
+      unname(ip_score(data$predictions, data, Y, A ~ L, 0, metrics = "brier",
                      null_model = F)$score$brier),
       with(data[data$A == 0,], 1/sum(w) * sum((predictions - Y)^2 * w))
     )

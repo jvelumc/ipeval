@@ -107,7 +107,7 @@ df_val <- simulate_data(10000, 234)
 To account for the time to event data, we specify a survival object as the outcome. As we have non-informative censoring in this example, we specify our censoring model to be estimated with Kaplan-Meier:
 
 ```{r, fig.width=6, fig.height=6}
-cfs <- CFscore(
+cfs <- ip_score(
   object = list("naive model" = model_naive, "causal model" = model_causal),
   data = df_val,
   outcome = Surv(time, status),
@@ -138,7 +138,7 @@ summary(df_val$status)
 We then set censoring model to "cox", and supply the formula needed for the censoring model as the right hand side of cens_formula. Internally, the censoring distribution is estimated with this expression, from which the inverse probability of **censoring** weights are computed.
 
 ```{r, fig.width=6, fig.height=6}
-CFscore(
+ip_score(
   object = list("naive model" = model_naive, "causal model" = model_causal),
   data = df_val,
   outcome = Surv(time, status),

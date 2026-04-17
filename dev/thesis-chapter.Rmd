@@ -109,12 +109,12 @@ What we really seek to evaluate is whether both untreated risk and treated risk 
 
 How well does our prediction model perform if we were to treat nobody? And if we were to treat everybody?
 
-The ipeval package aims to provide tools to answer questions like these. The main function CFscore() can be used for this. This function estimates several counterfactual performance measures in a validation dataset, printing by default the assumptions required for valid inference. 
+The ipeval package aims to provide tools to answer questions like these. The main function ip_score() can be used for this. This function estimates several counterfactual performance measures in a validation dataset, printing by default the assumptions required for valid inference. 
 
 Comparing the untreated risk to the counterfactual outcomes under no treatment:
 
 ```{r, fig.height=5, fig.width=5}
-CFscore(
+ip_score(
   object = list(
     "naive" = model_naive,
     "causal" = model_causal
@@ -130,7 +130,7 @@ CFscore(
 And, similarly, comparing the treated risk to the counterfactual outcomes under treatment (this time not printing the assumptions):
 
 ```{r, fig.height=5, fig.width=5}
-CFscore(
+ip_score(
   object = list(
     "naive" = model_naive,
     "causal" = model_causal

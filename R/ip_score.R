@@ -112,7 +112,7 @@
 #' model <- glm(Y ~ A + P, data = data, family = "binomial")
 #' naive_perfect <- data$Y
 #'
-#' CFscore(
+#' ip_score(
 #'   object = list("ran" = random, "mod" = model, "per" = naive_perfect),
 #'   data = data,
 #'   outcome = Y,
@@ -120,7 +120,7 @@
 #'   treatment_of_interest = 0,
 #' )
 
-CFscore <- function(object, data, outcome, treatment_formula,
+ip_score <- function(object, data, outcome, treatment_formula,
                     treatment_of_interest,
                     metrics = c("auc", "brier", "oeratio", "calplot"),
                     time_horizon, cens_model = "KM", cens_formula = ~ 1,
@@ -152,34 +152,34 @@ CFscore <- function(object, data, outcome, treatment_formula,
     stopifnot("can't bootstrap if iptw are given" = missing(iptw))
 
 
-  cfscore <- list()
+  score <- list()
 
   # get the observed outcome
-  cfscore$outcome <- extract_outcome(data, substitute(outcome))
-  if (inherits(cfscore$outcome, "Surv")) {
-    cfscore$outcome_type <- "survival"
-    cfscore$time_horizon <- time_horizon
-    cfscore$status_at_horizon <- ifelse(
-      test = cfscore$outcome[, 1] <= time_horizon,
-      yes = cfscore$outcome[, 2],
+  score$outcome <- extract_outcome(data, substitute(outcome))
+  if (inherits(score$outcome, "Surv")) {
+    score$outcome_type <- "survival"
+    score$time_horizon <- time_horizon
+    score$status_at_horizon <- ifelse(
+      test = score$outcome[, 1] <= time_horizon,
+      yes = score$outcome[, 2],
       no = FALSE
     )
   } else {
-    cfscore$outcome_type <- "binary"
+    score$outcome_type <- "binary"
   }
 
   # get the treatment
-  cfscore$treatment_column <- treatment_formula[[2]]
-  cfscore$observed_treatment <- extract_lhs(data, treatment_formula)
-  cfscore$treatment_of_interest <- treatment_of_interest
+  score$treatment_column <- treatment_formula[[2]]
+  score$observed_treatment <- extract_lhs(data, treatment_formula)
+  score$treatment_of_interest <- treatment_of_interest
   stopifnot("Treatment is not binary" =
-              setequal(unique(cfscore$observed_treatment), c(0,1)))
+              setequal(unique(score$observed_treatment), c(0,1)))
   stopifnot("Treatment_of_interest must be either 0 or 1" =
     treatment_of_interest == 0 || treatment_of_interest == 1)
 
   # make a list of risk predictions
   object <- make_list_if_not_list(object)
-  cfscore$predictions <- lapply(
+  score$predictions <- lapply(
     X = object,
     FUN = function(x) {
       if (is.numeric(x) && is.null(dim(x))) {
@@ -192,62 +192,62 @@ CFscore <- function(object, data, outcome, treatment_formula,
         predict_CF(
           x,
           data,
-          cfscore$treatment_column,
-          cfscore$treatment_of_interest,
-          time_horizon = cfscore$time_horizon
+          score$treatment_column,
+          score$treatment_of_interest,
+          time_horizon = score$time_horizon
         )
       }
     }
   )
 
   # get iptw
-  cfscore$ipt$method = "weights manually specified"
+  score$ipt$method = "weights manually specified"
   if (missing(iptw)) {
-    cfscore$ipt$method <- "binomial glm"
-    cfscore$ipt$confounders <- all.vars(treatment_formula)[-1]
-    cfscore$ipt$propensity_formula <- treatment_formula
+    score$ipt$method <- "binomial glm"
+    score$ipt$confounders <- all.vars(treatment_formula)[-1]
+    score$ipt$propensity_formula <- treatment_formula
     ipt <- ipt_weights(data, treatment_formula)
     iptw <- ipt$weights
-    cfscore$ipt$model <- ipt$model
+    score$ipt$model <- ipt$model
 
     if (stable_iptw == TRUE) {
       stable_treatment_formula <-
         stats::update.formula(treatment_formula, . ~ 1)
       sipt <- ipt_weights(data, stable_treatment_formula)
       iptw <- 1/sipt$weights * iptw
-      cfscore$ipt$stable_model <- sipt$model
+      score$ipt$stable_model <- sipt$model
     }
   }
-  cfscore$ipt$weights <- iptw
+  score$ipt$weights <- iptw
 
   # get ipcw
-  if (cfscore$outcome_type == "survival") {
-    cfscore$ipc$method <- "weights manually specified"
+  if (score$outcome_type == "survival") {
+    score$ipc$method <- "weights manually specified"
     if (missing(ipcw)) {
-      cfscore$ipc$method <- cens_model
+      score$ipc$method <- cens_model
 
       # annoying code to combine the Surv object from the outcome with the given
       # r.h.s. of the cens_formula
-      cfscore$ipc$cens_formula <- stats::update.formula(
+      score$ipc$cens_formula <- stats::update.formula(
         old = cens_formula,
         new = substitute(outcome ~ ., list(outcome = substitute(outcome)))
       )
-      ipc <- ipc_weights(data, cfscore$ipc$cens_formula,
+      ipc <- ipc_weights(data, score$ipc$cens_formula,
                          cens_model, time_horizon)
       ipcw <- ipc$weights
-      cfscore$ipc$model <- ipc$model
+      score$ipc$model <- ipc$model
 
     }
-    cfscore$ipc$weights <- ipcw
+    score$ipc$weights <- ipcw
   }
 
   # add null model if required
   if (null_model == TRUE) {
-    pseudo_ids <- cfscore$observed_treatment == cfscore$treatment_of_interest
-    if (cfscore$outcome_type == "binary") {
+    pseudo_ids <- score$observed_treatment == score$treatment_of_interest
+    if (score$outcome_type == "binary") {
       null_model <- stats::lm(
-        cfscore$outcome[pseudo_ids] ~ 1,
-        weights = cfscore$ipt$weights[pseudo_ids]
+        score$outcome[pseudo_ids] ~ 1,
+        weights = score$ipt$weights[pseudo_ids]
       )
       null_preds <- stats::predict.lm(null_model, newdata = data)
     } else { # survival outcome
@@ -255,72 +255,72 @@ CFscore <- function(object, data, outcome, treatment_formula,
       # no censoring
       # this seems wrong, but we only care about horizon, for which this works
       # (i think)
-      uncensor_ids <- cfscore$ipc$weights != 0
+      uncensor_ids <- score$ipc$weights != 0
       cf_ids <- pseudo_ids & uncensor_ids
 
       null_model <- stats::weighted.mean(
-        cfscore$status_at_horizon[cf_ids],
-        cfscore$ipt$weights[cf_ids]*cfscore$ipc$weights[cf_ids]
+        score$status_at_horizon[cf_ids],
+        score$ipt$weights[cf_ids]*score$ipc$weights[cf_ids]
       )
 
       null_preds <- rep(null_model, nrow(data))
     }
-    cfscore$predictions <- c(
+    score$predictions <- c(
       list("null model" = null_preds),
-      cfscore$predictions
+      score$predictions
     )
   }
 
 
-  cfscore$metrics <- metrics
-  cfscore$score <- get_metrics(cfscore)
+  score$metrics <- metrics
+  score$score <- get_metrics(score)
 
-  cfscore$bootstrap_iterations <- bootstrap
+  score$bootstrap_iterations <- bootstrap
   if (bootstrap != 0) {
-    cfscore$bootstrap_progress <- bootstrap_progress
-    cfscore$bootstrap <- bootstrap(data, cfscore)
+    score$bootstrap_progress <- bootstrap_progress
+    score$bootstrap <- bootstrap(data, score)
   }
 
-  cfscore$quiet <- quiet
+  score$quiet <- quiet
 
 
   # rearrange such that score is the first entry of the list
   front <- c("score")
-  cfscore <- cfscore[c(front, setdiff(names(cfscore), front))]
-  class(cfscore) <- "CFscore"
+  score <- score[c(front, setdiff(names(score), front))]
+  class(score) <- "ip_score"
 
-  return(cfscore)
+  return(score)
 }
 
-get_metrics <- function(cfscore) {
-  score <- list()
+get_metrics <- function(ip_score) {
+  metrics <- list()
 
-  if (cfscore$outcome_type == "survival") {
-    weights <- cfscore$ipt$weights * cfscore$ipc$weights
-    outcome <- cfscore$status_at_horizon
+  if (ip_score$outcome_type == "survival") {
+    weights <- ip_score$ipt$weights * ip_score$ipc$weights
+    outcome <- ip_score$status_at_horizon
   } else {
-    weights <- cfscore$ipt$weights
-    outcome <- cfscore$outcome
+    weights <- ip_score$ipt$weights
+    outcome <- ip_score$outcome
   }
 
-  for (m in cfscore$metrics) {
-    score[[m]] <- sapply(
-      X = cfscore$predictions,
+  for (m in ip_score$metrics) {
+    metrics[[m]] <- sapply(
+      X = ip_score$predictions,
       FUN = function(x) {
         cf_metric(
           m,
           obs_outcome = outcome,
-          obs_trt = cfscore$observed_treatment,
+          obs_trt = ip_score$observed_treatment,
           cf_pred = x,
-          cf_trt = cfscore$treatment_of_interest,
+          cf_trt = ip_score$treatment_of_interest,
           ipw = weights,
-          nullpred = cfscore$predictions[["null model"]]
+          nullpred = ip_score$predictions[["null model"]]
         )
       }
     )
   }
 
-  score
+  metrics
 }
 
 name_unnamed_list <- function(x) {
