@@ -38,7 +38,7 @@ The implementation uses the observed validation data to approximate a counterfac
 Predictive performance under a given intervention is then evaluated by comparing estimated risks with observed outcomes in the weighted (pseudo-)population. The package supports the following performance metrics: area under the receiver operating characteristic curve (AUC), Brier score, observed-expected (O/E) ratio, and calibration plots.
 
 # Illustration
-To demonstrate package functionality, we require a validation dataset and interventional predictions to validate. We simulate data with binary treatment $A$, binary outcome $Y$, continuous confounder $L$ and an additional predictor $P$ (see Figure 1). Treatment assignment depends on $L$, and treatment has a protective effect on the outcome (if $A = 1$ the probability of $Y = 1$ is lower than if $A = 0$). Table 1 shows the first few rows of the data.
+To demonstrate package functionality, we require a validation dataset and interventional predictions to validate. We simulate data with binary treatment $A$, binary outcome $Y$, continuous confounder $L$ and an additional predictor $P$ (see Figure 1). Treatment assignment depends on $L$, and treatment has a protective effect on the outcome (if $A = 1$ the probability of $Y = 1$ is lower than if $A = 0$). 
 
 ![Figure 1](dag.png)
 
@@ -49,11 +49,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(ipeval)
-```
-
 ```{r}
+library(ipeval)
+
 simulate_data <- function(n, seed) {
   set.seed(seed)
   data <- data.frame(id = 1:n)
@@ -65,10 +63,7 @@ simulate_data <- function(n, seed) {
 }
 
 df_dev <- simulate_data(n = 5000, seed = 1)
-```
-
-```{r, echo=FALSE}
-knitr::kable(head(df_dev, n = 5), caption = "First 5 rows of the dataset")
+head(df_dev)
 ```
 
 Two models are fitted to this data. A model that ignores the confounder:
@@ -102,10 +97,7 @@ We next assess the performance of both models in an external validation dataset,
 
 ```{r}
 df_val <- simulate_data(n = 10000, seed = 2)
-```
-
-```{r, echo=FALSE}
-knitr::kable(head(df_val, n = 5), caption = "First 5 rows of the external validation dataset")
+head(df_val)
 ```
 
 We begin by evaluating predictive performance using standard validation based on observed outcomes, where some patients were treated and others were not, and treatment assignment is influenced by confounder L.
