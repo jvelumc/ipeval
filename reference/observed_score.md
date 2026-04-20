@@ -1,9 +1,10 @@
-# Performance in observed dataset This function exists only to demonstrate the difference between 'normal' performance and counterfactual performance. It is not user friendly and should not be relied on. It does not support cox models out of the box.
+# Performance in observed dataset
 
-Performance in observed dataset This function exists only to demonstrate
-the difference between 'normal' performance and counterfactual
-performance. It is not user friendly and should not be relied on. It
-does not support cox models out of the box.
+This function computes the performance of the predictions in the given
+data, which may contain a mix of treated and untreated subjects. It
+exists only to demonstrate the difference between 'normal' performance
+and counterfactual performance. It is not user friendly and should not
+be relied on. It does not support time-to-event data.
 
 ## Usage
 
@@ -35,9 +36,8 @@ observed_score(
 
 - outcome:
 
-  The outcome, to be evaluated within data. This could either be the
-  name of a numeric column in data, or a Surv object for time-to-event
-  data, e.g. Surv(time, status), if time and status are columns in data.
+  The outcome, to be evaluated within data. This should be the name of a
+  numeric column in data.
 
 - metrics:
 

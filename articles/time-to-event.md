@@ -25,9 +25,6 @@ simulate_time_to_event <- function(n, constant_baseline_haz, LP) {
   -log(u) / (constant_baseline_haz * exp(LP))
 }
 
-# horizon <- 10
-# n <- 10000
-
 simulate_data <- function(n, seed) {
   set.seed(seed)
   data <- data.frame(
@@ -110,7 +107,7 @@ performance if every patient were to be assigned to treatment and
 remained uncensored, with a prediction horizon of 5 years.
 
 ``` r
-df_val <- simulate_data(10000, 234)
+df_val <- simulate_data(n = 10000, seed = 234)
 ```
 
 To account for the time to event data, we specify a survival object as
@@ -229,4 +226,6 @@ ip_score(
 ![](time-to-event_files/figure-html/unnamed-chunk-7-1.png)![](time-to-event_files/figure-html/unnamed-chunk-7-2.png)![](time-to-event_files/figure-html/unnamed-chunk-7-3.png)![](time-to-event_files/figure-html/unnamed-chunk-7-4.png)
 
 Note that the performance metrics we found in this example are
-approximately equal to the
+approximately equal to the setting with non informative censoring. This
+is reassuring, as we correctly adjust for the informative censoring
+mechanism in this setting.

@@ -136,7 +136,8 @@ ip_score(
 
 ## Value
 
-A list with performance metrics.
+A list with performance metrics, of class 'ip_score", for which the
+print and plot methods are implemented.
 
 ## Details
 
@@ -191,13 +192,14 @@ random <- runif(n, 0, 1)
 model <- glm(Y ~ A + P, data = data, family = "binomial")
 naive_perfect <- data$Y
 
-ip_score(
+score <- ip_score(
   object = list("ran" = random, "mod" = model, "per" = naive_perfect),
   data = data,
   outcome = Y,
   treatment_formula = A ~ L,
   treatment_of_interest = 0,
 )
+print(score)
 #> Estimation of the performance of the prediction model in a
 #>  counterfactual (CF) dataset where everyone's treatment A was set to 0.
 #> The following assumptions must be satisfied for correct inference:
@@ -214,4 +216,6 @@ ip_score(
 #>         ran 0.544 0.310    1.04
 #>         mod 0.668 0.232    1.17
 #>         per 1.000 0.000    1.61
+
+plot(score)
 ```

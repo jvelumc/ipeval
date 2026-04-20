@@ -88,12 +88,239 @@ and interventional predictions to validate. We simulate data with binary
 treatment $A$, binary outcome $Y$, continuous confounder $L$ and an
 additional predictor $P$ (see Figure 1). Treatment assignment depends on
 $L$, and treatment has a protective effect on the outcome (if $A = 1$
-the probability of $Y = 1$ is lower than if $A = 0$). Table 1 shows the
-first few rows of the data.
+the probability of $Y = 1$ is lower than if $A = 0$).
 
 ![Figure 1](dag.png)
 
 Figure 1
+
+``` r
+library(ipeval)
+
+simulate_data <- function(n, seed) {
+  set.seed(seed)
+  data <- data.frame(id = 1:n)
+  data$L <- rnorm(n)
+  data$A <- rbinom(n, 1, plogis(2*data$L))
+  data$P <- rnorm(n)
+  data$Y <- rbinom(n, 1, plogis(0.5 + data$L + 1.25 * data$P - 0.9*data$A))
+  data
+}
+
+df_dev <- simulate_data(n = 5000, seed = 1)
+head(df_dev)
+#>   id          L A          P Y
+#> 1  1 -0.6264538 0 -0.7948034 0
+#> 2  2  0.1836433 0  0.6060846 1
+#> 3  3 -0.8356286 0 -1.0624674 0
+#> 4  4  1.5952808 1  1.0192005 1
+#> 5  5  0.3295078 1  0.1776102 0
+#> 6  6 -0.8204684 0 -1.0309747 0
+```
+
+Two models are fitted to this data. A model that ignores the confounder:
+
+``` r
+# naive model, not accounting for confounding variable L
+model_naive <- glm(Y ~ A + P, "binomial", df_dev)
+print(coefficients(model_naive))
+#> (Intercept)           A           P 
+#> -0.07755949  0.26229542  1.15054747
+```
+
+And a model that accounts for confounding using inverse probability
+weights:
+
+``` r
+# causal model, accounting for L by IPTW
+trt_model <- glm(A ~ L, "binomial", df_dev)
+propensity_score <- predict(trt_model, type = "response")
+iptw <- 1 / ifelse(df_dev$A == 1, propensity_score, 1 - propensity_score)
+
+model_causal <- glm(Y ~ A + P, "binomial", df_dev, weights = iptw)
+print(coefficients(model_causal))
+#> (Intercept)           A           P 
+#>   0.4936374  -0.7629892   1.1213506
+```
+
+Both models can generate predictions under treatment (setting $a$ to
+$1$) and predictions under no treatment ($a$ to $0$).
+
+Note that according to the naive model, no patient should ever be
+treated, as treatment results in a higher estimated risk for a bad
+outcome. The reason for this is that individuals with high values of $L$
+are more likely to receive treatment. Although treatment reduces risk,
+these individuals typically remain at higher risk than untreated
+individuals because $L$ also directly increases the outcome risk. As a
+result, the naive model captures associations induced by the treatment
+assignment mechanism rather than the underlying causal effect.
+
+The causal model correctly infers that treatment benefits patients. Note
+that the ‘true’ effect of A was generated within a model that also
+conditions on L. Due to non-collapsibility, the estimated coefficient is
+not expected to coincide with the effect used in the data-generating
+mechanism.
+
+We next assess the performance of both models in an external validation
+dataset, which may in general differ in its underlying data-generating
+mechanism. In this illustrative example, the validation data are
+generated using the same process.
+
+``` r
+df_val <- simulate_data(n = 10000, seed = 2)
+head(df_val)
+#>   id           L A          P Y
+#> 1  1 -0.89691455 1 -0.8206868 0
+#> 2  2  0.18484918 0  0.1662410 1
+#> 3  3  1.58784533 1  0.1747081 0
+#> 4  4 -1.13037567 0  1.0416555 0
+#> 5  5 -0.08025176 1 -0.1434224 0
+#> 6  6  0.13242028 0  1.2078019 1
+```
+
+We begin by evaluating predictive performance using standard validation
+based on observed outcomes, where some patients were treated and others
+were not, and treatment assignment is influenced by confounder L.
+
+``` r
+observed_score(
+  object = list(
+    "naive" = model_naive,
+    "causal" = model_causal
+  ),
+  data = df_val,
+  outcome = Y,
+  metrics = c("auc", "brier", "oeratio")
+)
+#> 
+#>   model   auc brier oeratio
+#>   naive 0.764 0.197   0.997
+#>  causal 0.739 0.208   0.977
+```
+
+Under this evaluation, the naive model appears to outperform the causal
+model. However, these performance measures quantify the performance of
+the models under the treatment assignment strategy present in the
+evaluation data. If these models were to be used for decision-making,
+the treatment assignment mechanism would change, and these performance
+estimates would no longer be relevant.
+
+What we really seek to evaluate is whether both untreated risk and
+treated risk are accurate compared to the outcomes patients would get if
+they were to be untreated and treated, respectively. Thus, the question
+that we would like to have answered is the following:
+
+How well does our prediction model perform if we were to treat nobody?
+And if we were to treat everybody?
+
+The ipeval package aims to provide tools to answer questions like these.
+The main function
+[`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
+can be used for this. This function estimates several counterfactual
+performance metrics in a validation dataset, printing by default the
+assumptions required for valid inference.
+
+Comparing the risk under no treatment to the counterfactual outcomes
+under no treatment:
+
+``` r
+ip_score(
+  object = list(
+    "naive" = model_naive,
+    "causal" = model_causal
+  ),
+  data = df_val, 
+  outcome = Y,
+  treatment_formula = A ~ L, 
+  treatment_of_interest = 0,
+  null_model = FALSE
+)
+#> Estimation of the performance of the prediction model in a
+#>  counterfactual (CF) dataset where everyone's treatment A was set to 0.
+#> The following assumptions must be satisfied for correct inference:
+#> - Conditional exchangeability requires that the inverse probability of
+#>  treatment weights are sufficient to adjust for confounding between
+#>  treatment and outcome.
+#> - Conditional positivity (assess $ipt$weights for outliers)
+#> - Consistency (including no interference)
+#> - Correctly specified propensity model. Estimated treatment model is
+#>  logit(A) = 0.01 + 2.01*L. See also $ipt$model
+#> 
+#>   model   auc brier oeratio
+#>   naive 0.755 0.208    1.25
+#>  causal 0.755 0.194    1.01
+```
+
+![](ipeval_files/figure-html/unnamed-chunk-8-1.png)
+
+And, similarly, comparing the risk under treatment to the corresponding
+counterfactual outcome (this time not printing the assumptions):
+
+``` r
+ip_score(
+  object = list(
+    "naive" = model_naive,
+    "causal" = model_causal
+  ),
+  data = df_val, 
+  outcome = Y,
+  treatment_formula = A ~ L, 
+  treatment_of_interest = 1,
+  null_model = FALSE,
+  quiet = TRUE
+)
+#> 
+#>   model  auc brier oeratio
+#>   naive 0.76 0.208   0.806
+#>  causal 0.76 0.196   0.967
+```
+
+![](ipeval_files/figure-html/unnamed-chunk-9-1.png)
+
+From these performance metrics it can be seen that for both treatment
+options, the causal model outperforms the naive model in predicting the
+counterfactual outcome that we would observe if we were to set every
+patients treatment to the corresponding treatment.
+
+Other functions of the package include support for stabilized
+ipt-weights and bootstrapping for confidence intervals. Survival models
+such as Cox models can also be validated on right censored survival
+data.
+
+## Discussion
+
+In standard validation, the naive prediction model appeared to perform
+better, while the causal model demonstrated superior performance when
+evaluated under counterfactual scenarios. Relying solely on standard
+validation could lead to the erroneous conclusion that the naive model
+is preferable for decision support. According to the naive model, nobody
+should receive treatment, as it predicts higher risk under treatment
+(setting a to 1) than under no treatment (setting a to 0).
+
+This example highlights a fundamental issue: a model that performs well
+in predicting observed outcomes may not provide accurate predictions
+under alternative, hypothetical treatment strategies. Consequently,
+validation based solely on observed data may not reflect the model’s
+performance in the intended decision-making context. Counterfactual
+validation addresses this limitation by aligning the evaluation with the
+decision context. The counterfactual performance assessment indicates
+that the causal model is superior to the naive model when used for
+treatment decision making.
+
+It should be noted that counterfactual performance estimation remains
+dependent on causal assumptions. Violations, such as unmeasured
+confounding or model misspecification, may lead to biased
+estimates.^(1,6)
+
+## Future directions
+
+Many prediction models intended for decision support are currently not
+validated within a counterfactual framework. By providing accessible
+implementations of these methods, ipeval aims to facilitate more
+appropriate validation practices. Future developments will focus on
+extending the package to longitudinal treatment strategies where
+time-dependent confounding arises, and to settings involving competing
+risks.
 
 ## References
 
