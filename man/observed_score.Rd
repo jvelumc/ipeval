@@ -2,10 +2,7 @@
 % Please edit documentation in R/observed_score.R
 \name{observed_score}
 \alias{observed_score}
-\title{Performance in observed dataset This function exists only to demonstrate the
-difference between 'normal' performance and counterfactual performance. It is
-not user friendly and should not be relied on. It does not support cox models
-out of the box.}
+\title{Performance in observed dataset}
 \usage{
 observed_score(
   object,
@@ -25,9 +22,8 @@ observed_score(
 
 \item{data}{A data.frame containing the observed outcome.}
 
-\item{outcome}{The outcome, to be evaluated within data. This could either be
-the name of a numeric column in data, or a Surv object for time-to-event
-data, e.g. Surv(time, status), if time and status are columns in data.}
+\item{outcome}{The outcome, to be evaluated within data. This should be
+the name of a numeric column in data.}
 
 \item{metrics}{A character vector specifying which performance metrics to be
 computed. Options are c("auc", "brier", "oeratio", "calplot").}
@@ -36,8 +32,9 @@ computed. Options are c("auc", "brier", "oeratio", "calplot").}
 Performance metrics in the observed dataset.
 }
 \description{
-Performance in observed dataset This function exists only to demonstrate the
-difference between 'normal' performance and counterfactual performance. It is
-not user friendly and should not be relied on. It does not support cox models
-out of the box.
+This function computes the performance of the predictions in the given data,
+which may contain a mix of treated and untreated subjects. It exists only to
+demonstrate the difference between 'normal' performance and counterfactual
+performance. It is not user friendly and should not be relied on. It does not
+support time-to-event data.
 }

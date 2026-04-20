@@ -97,7 +97,8 @@ bootstrap is not possible.}
 \item{quiet}{If set to TRUE, don't print assumptions.}
 }
 \value{
-A list with performance metrics.
+A list with performance metrics, of class 'ip_score", for which the
+print and plot methods are implemented.
 }
 \description{
 Estimates the predictive performance of predictions under interventions, by
@@ -140,13 +141,15 @@ random <- runif(n, 0, 1)
 model <- glm(Y ~ A + P, data = data, family = "binomial")
 naive_perfect <- data$Y
 
-ip_score(
+score <- ip_score(
   object = list("ran" = random, "mod" = model, "per" = naive_perfect),
   data = data,
   outcome = Y,
   treatment_formula = A ~ L,
   treatment_of_interest = 0,
 )
+print(score)
+plot(score)
 }
 \references{
 Keogh RH, Van Geloven N. Prediction Under Interventions:
