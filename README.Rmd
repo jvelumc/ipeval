@@ -112,7 +112,8 @@ ip_score(
 )
 ```
 
-And similarly, we can assess performance if everybody would have been treated. It is also possible to get confidence intervals around the performance metrics with bootstrapping:
+And similarly, we can assess performance if everybody would have been treated:
+
 ```{r}
 ip_score(
   object = list(
@@ -124,9 +125,7 @@ ip_score(
   outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 1,
-  quiet = TRUE,
-  bootstrap = 50,
-  bootstrap_progress = FALSE
+  quiet = TRUE
 )
 ```
 

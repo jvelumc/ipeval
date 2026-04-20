@@ -193,8 +193,7 @@ ip_score(
 <img src="man/figures/README-unnamed-chunk-8-1.png" alt="" width="100%" />
 
 And similarly, we can assess performance if everybody would have been
-treated. It is also possible to get confidence intervals around the
-performance metrics with bootstrapping:
+treated:
 
 ``` r
 ip_score(
@@ -207,37 +206,17 @@ ip_score(
   outcome = Y,
   treatment_formula = A ~ L, 
   treatment_of_interest = 1,
-  quiet = TRUE,
-  bootstrap = 50,
-  bootstrap_progress = FALSE
+  quiet = TRUE
 )
 #> 
-#> auc
-#> 
-#>         model   auc lower upper
-#>    null model 0.500 0.500 0.500
-#>        random 0.533 0.498 0.575
-#>   naive model 0.739 0.704 0.780
-#>  causal model 0.739 0.704 0.780
-#> 
-#> brier
-#> 
-#>         model brier lower upper
-#>    null model 0.241 0.235 0.246
-#>        random 0.314 0.292 0.335
-#>   naive model 0.218 0.199 0.233
-#>  causal model 0.202 0.186 0.218
-#> 
-#> oeratio
-#> 
-#>         model oeratio lower upper
-#>    null model   1.000 0.925 1.066
-#>        random   0.812 0.752 0.869
-#>   naive model   0.751 0.697 0.800
-#>  causal model   0.930 0.863 0.988
+#>         model   auc brier oeratio
+#>    null model 0.500 0.241   1.000
+#>        random 0.533 0.314   0.812
+#>   naive model 0.739 0.218   0.751
+#>  causal model 0.739 0.202   0.930
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-9-2.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-9-3.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-9-4.png" alt="" width="100%" /><img src="man/figures/README-unnamed-chunk-9-5.png" alt="" width="100%" />
+<img src="man/figures/README-unnamed-chunk-9-1.png" alt="" width="100%" />
 
 The causal model has better calibration and Brier score for these
 settings. Note that the AUC of the naive model and the causal model are
