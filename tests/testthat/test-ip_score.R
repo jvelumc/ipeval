@@ -75,6 +75,14 @@ test_that("wrong input throws sensible errors", {
     ip_score(predictions, data, status, A ~ L, 2),
     "Treatment_of_interest"
   )
+
+  # other
+  expect_error(
+    ip_score(predictions, data, status, A ~ L, 1,
+             iptw = runif(n), bootstrap = 50),
+    "can't bootstrap"
+  )
+
 })
 
 test_that("supplying (list of) model or predictions equivalent", {

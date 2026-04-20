@@ -85,7 +85,8 @@
 #'   bootstrap is not possible.
 #' @param quiet If set to TRUE, don't print assumptions.
 #'
-#' @returns A list with performance metrics.
+#' @returns A list with performance metrics, of class 'ip_score", for which the
+#' print and plot methods are implemented.
 #'
 #' @export
 #'
@@ -112,13 +113,15 @@
 #' model <- glm(Y ~ A + P, data = data, family = "binomial")
 #' naive_perfect <- data$Y
 #'
-#' ip_score(
+#' score <- ip_score(
 #'   object = list("ran" = random, "mod" = model, "per" = naive_perfect),
 #'   data = data,
 #'   outcome = Y,
 #'   treatment_formula = A ~ L,
 #'   treatment_of_interest = 0,
 #' )
+#' print(score)
+#' plot(score)
 
 ip_score <- function(object, data, outcome, treatment_formula,
                     treatment_of_interest,
@@ -277,6 +280,16 @@ ip_score <- function(object, data, outcome, treatment_formula,
 
   score$bootstrap_iterations <- bootstrap
   if (bootstrap != 0) {
+    if (score$ipt$method == "weights manually specified" ||
+        (score$outcome_type == "survival" &&
+         score$ipc$method == "weights manually specified")) {
+      stop("Can not compute confidence intervals if manually specifying
+               iptw/ipcw.")
+    }
+    stopifnot(
+      "bootstrap should be the number of iterations and must be greater than 1" =
+        bootstrap > 1)
+
     score$bootstrap_progress <- bootstrap_progress
     score$bootstrap <- bootstrap(data, score)
   }
