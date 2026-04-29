@@ -9,3 +9,4 @@ todo
 
 discuss
 - event/censor ties for cox censoring
+- null model on survival data?
