@@ -1,7 +1,7 @@
 todo
 - CRAN
   - check vignettes/readme/doc/DESCRIPTION
-
+- print when stabilized weights
 - longitudinal trts
 - multiple censoring mechanisms
 - nonbinary treatments?

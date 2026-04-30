@@ -31,6 +31,10 @@ cox$coefficients
 
 score <-ip_score(list(naive_model, causal_model), data, Y, A ~ L, 0)
 
+score
+
+bs <- ip_score(list(naive_model, causal_model), data, Y, A ~ L, 0, bootstrap = 10)
+
 
 ips <- ip_score(causal_model, data, Surv(time, status), A ~ L, 0, time_horizon = 5)
 

@@ -154,7 +154,6 @@ ip_score <- function(object, data, outcome, treatment_formula,
   if (bootstrap != 0)
     stopifnot("can't bootstrap if iptw are given" = missing(iptw))
 
-
   score_outcome <- extract_outcome(data, substitute(outcome), time_horizon)
 
   score_treatment <- extract_treatment(data, treatment_formula,
@@ -165,102 +164,102 @@ ip_score <- function(object, data, outcome, treatment_formula,
                                        score_treatment$treatment_of_interest,
                                        score_outcome$time_horizon)
 
-  score_iptw <- get_iptw(treatment_formula, data, stable_iptw, iptw)
+  score_ipt <- get_iptw(treatment_formula, data, stable_iptw, iptw)
 
-  if (score_outcome$outcome_type == "survival") {
-    score_ipcw <- get_ipcw(cens_formula, substitute(outcome), data, cens_model,
-                           time_horizon, ipcw)
+  if (score_outcome$type == "survival") {
+    cens_formula <- combine_censoring_formula(cens_formula, substitute(outcome))
+    score_ipc <- get_ipcw(cens_formula, data, cens_model, time_horizon, ipcw)
   } else {
-    score_ipcw <- NULL
+    score_ipc <- NULL
   }
 
-  # if null model
+  if (null_model) {
+    score_predictions <- fit_null(score_treatment, score_outcome,
+                                  score_predictions, score_ipt, score_ipc)
+  }
 
   # make object
+  ip_object <- construct_ip_object(score_outcome, score_treatment,
+                                   score_predictions, score_ipt, score_ipc,
+                                   metrics)
 
-  # do metrics
+  # compute metrics
+  ip_object <- compute_metrics(ip_object)
 
   # do bootstrap
-
-  list("outcome" = score_outcome,
-       "treatment" = score_treatment,
-       "predictions" = score_predictions,
-       "iptw" = score_iptw,
-       "ipcw" = score_ipcw)
-
-
-}
-
-
-
-
-
-get_metrics <- function(ip_score) {
-  metrics <- list()
-
-  if (ip_score$outcome_type == "survival") {
-    weights <- ip_score$ipt$weights * ip_score$ipc$weights
-    outcome <- ip_score$status_at_horizon
-  } else {
-    weights <- ip_score$ipt$weights
-    outcome <- ip_score$outcome
+  if (bootstrap > 0) {
+    bs <- bootstrap(data, ip_object, bootstrap, bootstrap_progress)
+    ip_object <- add_to_ip_object(ip_object, "bootstrap", bs, after = 1)
+    ip_object <- add_to_ip_object(ip_object, "bootstrap_iterations", bootstrap)
   }
 
-  for (m in ip_score$metrics) {
+  ip_object <- add_to_ip_object(ip_object, "quiet", quiet)
+  return(ip_object)
+}
+
+combine_censoring_formula <- function(cens_formula, outcome) {
+  stats::update.formula(
+    old = cens_formula,
+    new = as.formula(call("~", outcome, quote(.)))
+  )
+}
+
+compute_metrics <- function(ip_object) {
+  metrics <- list()
+
+  if (ip_object$outcome$type == "survival") {
+    weights <- ip_object$ipt$weights * ip_object$ipc$weights
+    outcome <- ip_object$outcome$status_at_horizon
+  } else {
+    weights <- ip_object$ipt$weights
+    outcome <- ip_object$outcome$observed
+  }
+
+  for (m in ip_object$metrics) {
     metrics[[m]] <- sapply(
-      X = ip_score$predictions,
+      X = ip_object$predictions,
       FUN = function(x) {
         cf_metric(
           m,
           obs_outcome = outcome,
-          obs_trt = ip_score$observed_treatment,
+          obs_trt = ip_object$treatment$observed,
           cf_pred = x,
-          cf_trt = ip_score$treatment_of_interest,
+          cf_trt = ip_object$treatment$treatment_of_interest,
           ipw = weights,
-          nullpred = ip_score$predictions[["null model"]]
+          nullpred = ip_object$predictions[["null model"]]
         )
       }
     )
   }
 
-  metrics
+  ip_object <- add_to_ip_object(ip_object, "score", metrics, after = 0)
+
+  return(ip_object)
 }
 
-# ip_score <- function(...) {
-#   # input checks
-#
-#   # get outcome
-#
-#   # get trt
-#
-#   # make list of risk predictions
-#
-#   # iptw
-#
-#   # ipcw
-#
-#   # null model
-#
-#   construct_ip_score(...)
-#   compute_score(...)
-# }
+construct_ip_object <- function(outcome, treatment, predictions, ipt, ipc,
+                                metrics) {
 
-construct_ip_score <- function(outcome, outcome_type,
-                               treatment_column, observed_treatment,
-                               treatment_of_interest,
-                               predictions,
-                               ipt, metrics, bootstrap, ...) {
-
-  list()
-
+  ip_object <- list(
+    "outcome" = outcome,
+    "treatment" = treatment,
+    "predictions" = predictions,
+    "metrics" = metrics,
+    "ipt" = ipt
+  )
+  if (ip_object$outcome$type == "survival") {
+    ip_object$ipc = ipc
+  }
+  class(ip_object) <- "ip_score"
+  return(ip_object)
 }
 
-
-
-compute_score <- function(ip_score) {
-
+add_to_ip_object <- function(ip_object, name, value, after = length(ip_object)) {
+  ip_object <- append(ip_object, list(value), after = after)
+  names(ip_object)[after+1] <- name
+  class(ip_object) <- "ip_score"
+  return(ip_object)
 }
-
 
 name_unnamed_list <- function(x) {
   # give names, if not named
@@ -324,7 +323,7 @@ extract_outcome <- function(data, outcome, time_horizon) {
   outcome_list <- list("observed" = y)
 
   if (inherits(outcome_list$observed, "Surv")) {
-    outcome_list$outcome_type <- "survival"
+    outcome_list$type <- "survival"
     outcome_list$time_horizon <- time_horizon
     outcome_list$status_at_horizon <- ifelse(
       test = outcome_list$observed[, 1] <= time_horizon,
@@ -332,7 +331,7 @@ extract_outcome <- function(data, outcome, time_horizon) {
       no = FALSE
     )
   } else {
-    outcome_list$outcome_type <- "binary"
+    outcome_list$type <- "binary"
   }
   outcome_list
 }
@@ -342,6 +341,7 @@ extract_treatment <- function(data, treatment_formula, treatment_of_interest) {
   trt_list$treatment_column <- treatment_formula[[2]]
   trt_list$observed <- extract_lhs(data, treatment_formula)
   trt_list$treatment_of_interest <- treatment_of_interest
+  trt_list$propensity_formula <- treatment_formula
   stopifnot("Treatment is not binary" =
               setequal(unique(trt_list$observed), c(0,1)))
   stopifnot("Treatment_of_interest must be either 0 or 1" =
@@ -376,7 +376,8 @@ get_predictions <- function(object, data, treatment_column,
   predictions
 }
 
-get_iptw <- function(treatment_formula, data, stable_iptw, iptw) {
+get_iptw <- function(treatment_formula, data, stable_iptw, iptw,
+                     only_weights = FALSE) {
   ipt <- list()
   ipt$method = "weights manually specified"
 
@@ -387,7 +388,9 @@ get_iptw <- function(treatment_formula, data, stable_iptw, iptw) {
     iptw_object <- ipt_weights(data, treatment_formula)
     ipt$model <- iptw_object$model
     iptw <- iptw_object$weights
+
     if (stable_iptw == TRUE) {
+      ipt$method <- "stabilized weights"
       stable_treatment_formula <-
         stats::update.formula(treatment_formula, . ~ 1)
       sipt_object <- ipt_weights(data, stable_treatment_formula)
@@ -396,57 +399,64 @@ get_iptw <- function(treatment_formula, data, stable_iptw, iptw) {
     }
   }
   ipt$weights <- iptw
-  ipt
+
+  if (only_weights == TRUE) {
+    return(list("weights" = ipt$weights))
+  } else {
+    return(ipt)
+  }
 }
 
-get_ipcw <- function(cens_formula, outcome, data, cens_model, time_horizon, ipcw) {
+get_ipcw <- function(cens_formula, data, cens_model, time_horizon,
+                     ipcw, only_weights = FALSE) {
   ipc <- list()
   ipc$method <- "weights manually specified"
   if (missing(ipcw)) {
     ipc$method <- cens_model
-
-    # annoying code to combine the Surv object from the outcome with the given
-    # r.h.s. of the cens_formula
-    ipc$cens_formula <- stats::update.formula(
-      old = cens_formula,
-      new = as.formula(call("~", outcome, quote(.)))
-    )
+    ipc$cens_formula <- cens_formula
     ipc_object <- ipc_weights(data, ipc$cens_formula,
                        cens_model, time_horizon)
     ipcw <- ipc_object$weights
     ipc$model <- ipc_object$model
-
   }
   ipc$weights <- ipcw
-  ipc
+
+  if (only_weights == TRUE) {
+    return(list("weights" = ipc$weights))
+  } else {
+    return(ipc)
+  }
 }
 
-fit_null <- function(score_treatment, score_outcome, score_ipt, score_ipc) {
+fit_null <- function(score_treatment, score_outcome, score_predictions,
+                     score_ipt, score_ipc) {
   pseudo_ids <- score_treatment$observed == score_treatment$treatment_of_interest
+  n <- length(score_outcome$observed)
   if (score_outcome$type == "binary") {
     null_model <- stats::lm(
       score_outcome$observed[pseudo_ids] ~ 1,
-      weights = score_ipc$weights[pseudo_ids]
+      weights = score_ipt$weights[pseudo_ids]
     )
-    null_preds <- stats::predict.lm(null_model, newdata = data)
-  } else { # survival outcome
-    # fit null model in a pseudopopuluation where everyone was treated and
-    # no censoring
-    # this seems wrong, but we only care about horizon, for which this works
-    # (i think)
+    null_pred <- unname(stats::predict.lm(
+      null_model, newdata = data.frame(1)
+    ))
+    null_preds <- rep(null_pred, n)
+  } else {
+    # fit null model in a pseudopopuluation where everyone had treatment of
+    # interest and remained uncensored
     uncensor_ids <- score_ipc$weights != 0
     cf_ids <- pseudo_ids & uncensor_ids
 
     null_model <- stats::weighted.mean(
       score_outcome$status_at_horizon[cf_ids],
-      score$ipt$weights[cf_ids]*score$ipc$weights[cf_ids]
+      score_ipt$weights[cf_ids]*score_ipc$weights[cf_ids]
     )
 
-    null_preds <- rep(null_model, nrow(data))
+    null_preds <- rep(null_model, n)
   }
-  score$predictions <- c(
+  score_predictions <- c(
     list("null model" = null_preds),
-    score$predictions
+    score_predictions
   )
-
+  return(score_predictions)
 }

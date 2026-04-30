@@ -3,82 +3,82 @@
 test_that("wrong input throws sensible errors", {
   n <- 1000
   adminstrative_censor <- 10
-  data <- data.frame(
+  my_data <- data.frame(
     L = rnorm(n, mean = 0),
     P = rnorm(n, mean = 0)
   )
-  data$A <- rbinom(n, 1, plogis(0.2 + 0.5*data$L))
+  my_data$A <- rbinom(n, 1, plogis(0.2 + 0.5*my_data$L))
 
-  data$time0 <- simulate_time_to_event(n, 0.04, data$L + 0.5*data$P)
-  data$time1 <- simulate_time_to_event(n, 0.04, data$L + 0.5*data$P - 0.6)
-  data$time_uncensored <- ifelse(data$A == 1, data$time1, data$time0)
-  data$status <- ifelse(data$time_uncensored <= adminstrative_censor, TRUE, FALSE)
-  data$time <- ifelse(data$status == TRUE, data$time_uncensored, adminstrative_censor)
+  my_data$time0 <- simulate_time_to_event(n, 0.04, my_data$L + 0.5*my_data$P)
+  my_data$time1 <- simulate_time_to_event(n, 0.04, my_data$L + 0.5*my_data$P - 0.6)
+  my_data$time_uncensored <- ifelse(my_data$A == 1, my_data$time1, my_data$time0)
+  my_data$status <- ifelse(my_data$time_uncensored <= adminstrative_censor, TRUE, FALSE)
+  my_data$time <- ifelse(my_data$status == TRUE, my_data$time_uncensored, adminstrative_censor)
 
   predictions <- runif(n, 0, 1)
 
   # object ------------------------------------------------------------------
   expect_error(
-    ip_score(predictions[1:999], data = data, outcome = status, A ~ L, 1),
+    ip_score(predictions[1:999], data = my_data, outcome = status, A ~ L, 1),
     "Predictions must be of length nrow"
   )
 
   expect_error(
-    ip_score(lm(status ~ A, data), data = data, outcome = status, A ~ L, 1),
+    ip_score(lm(status ~ A, my_data), data = my_data, outcome = status, A ~ L, 1),
     "model class lm not supported"
   )
 
   expect_error(
-    ip_score(runif(n, -1, 2), data = data, outcome = status, A ~ L, 1),
+    ip_score(runif(n, -1, 2), data = my_data, outcome = status, A ~ L, 1),
     "Predictions must be in interval"
   )
 
   # outcome -----------------------------------------------------------------
   expect_error(
-    ip_score(predictions, data = data, outcome = B, A ~ L, 1),
+    ip_score(predictions, data = my_data, outcome = B, A ~ L, 1),
     "Outcome B not found"
   )
 
   expect_error(
-    ip_score(predictions, data = data, outcome = data$status[1:999], A ~ L, 1),
+    ip_score(predictions, data = my_data, outcome = data$status[1:999], A ~ L, 1),
     "Outcome must be of length"
   )
 
   expect_error(
-    ip_score(predictions, data = data, outcome = time, A ~ L, 1),
+    ip_score(predictions, data = my_data, outcome = time, A ~ L, 1),
     "Outcome must be binary"
   )
 
   expect_error(
-    ip_score(predictions, data = data, outcome = rep(1, 1000), A ~ L, 1,
+    ip_score(predictions, data = my_data, outcome = rep(1, 1000), A ~ L, 1,
             metrics = "auc"),
     "no controls"
   )
 
   # treatment
   expect_error(
-    ip_score(predictions, data, status, A + B ~ L, 1),
+    ip_score(predictions, my_data, status, A + B ~ L, 1),
     "treatment formula must be one variable"
   )
 
   expect_error(
-    ip_score(predictions, data, status, ~ L, 1),
+    ip_score(predictions, my_data, status, ~ L, 1),
     "treatment formula must be one variable"
   )
 
   expect_error(
-    ip_score(predictions, data, status, time ~ L, 1),
+    ip_score(predictions, my_data, status, time ~ L, 1),
     "Treatment is not binary"
   )
 
   expect_error(
-    ip_score(predictions, data, status, A ~ L, 2),
+    ip_score(predictions, my_data, status, A ~ L, 2),
     "Treatment_of_interest"
   )
 
   # other
   expect_error(
-    ip_score(predictions, data, status, A ~ L, 1,
+    ip_score(predictions, my_data, status, A ~ L, 1,
              iptw = runif(n), bootstrap = 50),
     "can't bootstrap"
   )
@@ -660,7 +660,6 @@ test_that("results are in between lower & upper bootstrap, surv, cox censor", {
     formula = survival::Surv(time, status) ~ P + A,
     data = data
   )
-
   ip_score <- ip_score(
     data = data,
     object = model,
