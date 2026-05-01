@@ -430,30 +430,27 @@ get_ipcw <- function(cens_formula, data, cens_model, time_horizon,
 
 fit_null <- function(score_treatment, score_outcome, score_predictions,
                      score_ipt, score_ipc) {
+  # fit a null on the pseudo-population that received treatment of
+  # interest, and add it to the score_predictions
   pseudo_ids <- score_treatment$observed == score_treatment$treatment_of_interest
   n <- length(score_outcome$observed)
   if (score_outcome$type == "binary") {
-    null_model <- stats::lm(
-      score_outcome$observed[pseudo_ids] ~ 1,
-      weights = score_ipt$weights[pseudo_ids]
+    null_prediction <- stats::weighted.mean(
+      score_outcome$observed[pseudo_ids],
+      score_ipt$weights[pseudo_ids]
     )
-    null_pred <- unname(stats::predict.lm(
-      null_model, newdata = data.frame(1)
-    ))
-    null_preds <- rep(null_pred, n)
   } else {
     # fit null model in a pseudopopuluation where everyone had treatment of
     # interest and remained uncensored
     uncensor_ids <- score_ipc$weights != 0
     cf_ids <- pseudo_ids & uncensor_ids
-
-    null_model <- stats::weighted.mean(
+    null_prediction <- stats::weighted.mean(
       score_outcome$status_at_horizon[cf_ids],
       score_ipt$weights[cf_ids]*score_ipc$weights[cf_ids]
     )
-
-    null_preds <- rep(null_model, n)
   }
+  null_preds <- rep(null_prediction, n)
+
   score_predictions <- c(
     list("null model" = null_preds),
     score_predictions
