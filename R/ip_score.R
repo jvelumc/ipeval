@@ -200,7 +200,7 @@ ip_score <- function(object, data, outcome, treatment_formula,
 combine_censoring_formula <- function(cens_formula, outcome) {
   stats::update.formula(
     old = cens_formula,
-    new = as.formula(call("~", outcome, quote(.)))
+    new = stats::as.formula(call("~", outcome, quote(.)))
   )
 }
 
