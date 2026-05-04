@@ -1,7 +1,10 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# ipeval <!-- badges: start --> <!-- badges: end -->
+# ipeval <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 Provides methods to evaluate predictive performance of models that
 estimate risks under hypothetical intervention scenarios
