@@ -261,7 +261,9 @@ under no treatment of patients that were not treated. It does not assess
 the performance of risks under treatment of patients that were not
 treated and vice versa. If these models were to be used for
 decision-making, the treatment assignment mechanism would change, and
-these performance estimates would no longer be relevant.
+these performance estimates would no longer be relevant. For this
+reason, the predictive performance under interventions should be
+estimated, using $`ip_score()`$.
 
 ## Further reading
 
