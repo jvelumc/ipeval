@@ -2,24 +2,25 @@
 
 ## Abstract
 
-We present the R package ipeval, which facilitates evaluation of
-predictive performance under hypothetical intervention settings using
-observational data. The package currently supports binary outcomes and
-time-to-event outcomes under binary (point) interventions. It implements
-methods to assess counterfactual predictive performance using inverse
-probability of treatment weighting (IPTW).
+We present the R package ipeval, which facilitates evaluation of the
+predictive performance of models that enable predictions to be generated
+under hypothetical intervention settings using observational data. The
+package currently supports binary outcomes and time-to-event outcomes
+under binary (point) interventions. It implements methods to assess
+counterfactual predictive performance using inverse probability of
+treatment weighting (IPTW).
 
 ## Introduction
 
 Certain prediction models aim to estimate an individual’s risk under
-hypothetical intervention scenarios. These are referred to as
-interventional prediction models or models for prediction under
-interventions (where intervention can e.g. be a certain medical
-treatment but could also be a certain behavioral change or health
-policy).¹ For example, a model may estimate a patient’s risk if
-untreated, if undergoing surgery, or if initiating medication.^(2–4)
-Models may also facilitate risk predictions under several treatment
-options.⁵
+hypothetical intervention scenarios, where intervention can e.g. be a
+certain medical treatment but could also be a certain behavioral change
+or health policy. These are referred to as
+interventional/causal/counterfactual prediction models or models for
+prediction under interventions.¹ For example, a model may estimate a
+patient’s risk if untreated, if undergoing surgery, or if initiating
+medication.^(2–4) Models may also facilitate risk predictions under
+several treatment options.⁵
 
 Because such predictions under interventions are often intended to
 inform medical decision-making, rigorous validation is essential. In
@@ -32,14 +33,15 @@ interventions remain unobserved. These are referred to as counterfactual
 outcomes in causal inference terminology.⁶
 
 When models are used to guide treatment decisions, their performance
-must be evaluated across all relevant intervention options for each
-individual, not only the observed intervention option.^(1,7,8) Because
-clinicians generally assign treatments based on patient characteristics,
-treatment groups may not be comparable. Because of this, a model that
-accurately estimates the risk of a patient under treatment may not
-perform well estimating their counterfactual risk under no treatment,
-even if the model also performs well in the group of patients that were
-actually untreated.
+must be evaluated under all relevant intervention options for each
+individual in the validation data, not only under the interventions that
+were actually observed.^(1,7,8) Because clinicians generally assign
+treatments based on patient characteristics, treatment groups may not be
+comparable due to confounding. Because of this, a model that accurately
+estimates the risk of a patient under treatment may not perform well
+estimating their counterfactual risk under no treatment, even if the
+model also performs well in the group of patients that were actually
+untreated.
 
 Evaluating performance of the predictions under only the observed
 treatments reflects predictive performance under the historical
@@ -51,15 +53,15 @@ under historical treatment assignment mechanism can lead to harmful
 decisions when applied to new patients.⁹
 
 The appropriate target is counterfactual predictive performance: the
-agreement between estimated risks and the outcomes that would be
-observed if all individuals were assigned the specific intervention
-option of interest. For example, how well do estimated risks align with
-outcomes in a hypothetical scenario where all patients receive
-treatment? Despite its importance, a recent review indicates that this
-type of validation is rarely conducted.¹⁰ This package addresses this
-gap by providing tools to perform such evaluations for binary and
-time-to-event outcomes, based on the work of Keogh and Van Geloven
-(2024).¹
+agreement between estimated risks under the specific intervention option
+of interest and the outcomes that would be observed if all individuals
+were assigned that intervention. For example, how well do estimated
+risks align with outcomes in a hypothetical scenario where all patients
+receive treatment? Despite its importance, a recent review indicates
+that this type of validation is rarely conducted.¹⁰ This package
+addresses this gap by providing tools to perform such evaluations for
+binary and time-to-event outcomes, based on the work of Keogh and Van
+Geloven (2024).¹
 
 ## Methods
 
@@ -83,18 +85,25 @@ Brier score, observed-expected (O/E) ratio, and calibration plots.
 
 ## Illustration
 
-To demonstrate package functionality, we require a validation dataset
-and interventional predictions to validate. We simulate data with binary
-treatment $A$, binary outcome $Y$, continuous confounder $L$ and an
-additional predictor $P$ (see Figure 1). Treatment assignment depends on
-$L$, and treatment has a protective effect on the outcome (if $A = 1$
-the probability of $Y = 1$ is lower than if $A = 0$).
+Inputs required to the functions in this package include: (1) a
+validation data set in which the performance of an interventional
+prediction model is to be evaluated, and (2) models from which
+predictions can be made under a specified binary intervention for
+individuals in the validation data.
+
+To develop the interventional prediction model, we first simulate
+development data as in the DAG in Figure 1 for binary treatment $`A`$,
+binary outcome $`Y`$, continuous confounder $`L`$ and an additional
+predictor $`P`$. Treatment assignment depends on $`L`$, and treatment
+has a protective effect on the outcome (if $`A = 1`$ the probability of
+$`Y = 1`$ is lower than if $`A = 0`$).
 
 ![Figure 1](dag.png)
 
 Figure 1
 
 ``` r
+
 library(ipeval)
 
 simulate_data <- function(n, seed) {
@@ -118,9 +127,17 @@ head(df_dev)
 #> 6  6 -0.8204684 0 -1.0309747 0
 ```
 
-Two models are fitted to this data. A model that ignores the confounder:
+Suppose that the aim of our models are for informing whether patients
+should receive treatment or not, by providing estimates of what their
+risk would be if they were treated and what it would be if they were
+untreated. We create two prediction models using the development data,
+from which such predictions could be obtained. The ‘naive model’ and the
+‘causal model’ both include A and P as predictors for Y.
+
+The naive model ignores confounding by $`L`$.
 
 ``` r
+
 # naive model, not accounting for confounding variable L
 model_naive <- glm(Y ~ A + P, "binomial", df_dev)
 print(coefficients(model_naive))
@@ -128,10 +145,11 @@ print(coefficients(model_naive))
 #> -0.07755949  0.26229542  1.15054747
 ```
 
-And a model that accounts for confounding using inverse probability
-weights:
+The causal model controls for the confounding by L through inverse
+probability weights:
 
 ``` r
+
 # causal model, accounting for L by IPTW
 trt_model <- glm(A ~ L, "binomial", df_dev)
 propensity_score <- predict(trt_model, type = "response")
@@ -143,17 +161,17 @@ print(coefficients(model_causal))
 #>   0.4936374  -0.7629892   1.1213506
 ```
 
-Both models can generate predictions under treatment (setting $a$ to
-$1$) and predictions under no treatment ($a$ to $0$).
-
-Note that according to the naive model, no patient should ever be
-treated, as treatment results in a higher estimated risk for a bad
-outcome. The reason for this is that individuals with high values of $L$
-are more likely to receive treatment. Although treatment reduces risk,
-these individuals typically remain at higher risk than untreated
-individuals because $L$ also directly increases the outcome risk. As a
-result, the naive model captures associations induced by the treatment
-assignment mechanism rather than the underlying causal effect.
+Both models can generate predictions under treatment (setting $`A`$
+to 1) and predictions under no treatment ($`A`$ to 0), given values of
+the predictors P. If using the predictions for decision making,
+according to the naive model, no patient should be treated, as patients
+that get treated have a higher risk for the outcome. The reason for this
+is that individuals with high values of $`L`$ are more likely to receive
+treatment. Although treatment reduces risk, these individuals typically
+remain at higher risk than untreated individuals because $`L`$ also
+directly increases the outcome risk. As a result, the naive model
+captures associations induced by the treatment assignment mechanism
+rather than the underlying causal effect.
 
 The causal model correctly infers that treatment benefits patients. Note
 that the ‘true’ effect of A was generated within a model that also
@@ -167,6 +185,7 @@ mechanism. In this illustrative example, the validation data are
 generated using the same process.
 
 ``` r
+
 df_val <- simulate_data(n = 10000, seed = 2)
 head(df_val)
 #>   id           L A          P Y
@@ -178,11 +197,13 @@ head(df_val)
 #> 6  6  0.13242028 0  1.2078019 1
 ```
 
-We begin by evaluating predictive performance using standard validation
-based on observed outcomes, where some patients were treated and others
-were not, and treatment assignment is influenced by confounder L.
+In traditional validation studies, it is common to leave the data as it
+is, and compute the performance metrics on this observed dataset, where
+some patients were treated and others were not, and treatment assignment
+is dependent on confounders.
 
 ``` r
+
 observed_score(
   object = list(
     "naive" = model_naive,
@@ -201,14 +222,18 @@ observed_score(
 Under this evaluation, the naive model appears to outperform the causal
 model. However, these performance measures quantify the performance of
 the models under the treatment assignment strategy present in the
-evaluation data. If these models were to be used for decision-making,
-the treatment assignment mechanism would change, and these performance
-estimates would no longer be relevant.
+evaluation data. It quantifies a mixture of performance of the estimated
+risk under treatment of patients that were treated, and of performance
+of the estimated risk under no treatment of patients that were not
+treated. It does not assess the performance of risks under treatment of
+patients that were not treated and vice versa. If these models were to
+be used for decision-making, the treatment assignment mechanism would
+change, and these performance estimates would no longer be relevant.
 
 What we really seek to evaluate is whether both untreated risk and
-treated risk are accurate compared to the outcomes patients would get if
-they were to be untreated and treated, respectively. Thus, the question
-that we would like to have answered is the following:
+treated risk are accurate compared to the outcomes all patients would
+get if they were to be untreated and treated, respectively. Thus, the
+question that we would like to have answered is the following:
 
 How well does our prediction model perform if we were to treat nobody?
 And if we were to treat everybody?
@@ -216,14 +241,15 @@ And if we were to treat everybody?
 The ipeval package aims to provide tools to answer questions like these.
 The main function
 [`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
-can be used for this. This function estimates several counterfactual
-performance metrics in a validation dataset, printing by default the
+can be used for this. This function estimates several predictive
+performance measures in a validation dataset, printing by default the
 assumptions required for valid inference.
 
 Comparing the risk under no treatment to the counterfactual outcomes
 under no treatment:
 
 ``` r
+
 ip_score(
   object = list(
     "naive" = model_naive,
@@ -257,6 +283,7 @@ And, similarly, comparing the risk under treatment to the corresponding
 counterfactual outcome (this time not printing the assumptions):
 
 ``` r
+
 ip_score(
   object = list(
     "naive" = model_naive,
@@ -295,7 +322,7 @@ evaluated under counterfactual scenarios. Relying solely on standard
 validation could lead to the erroneous conclusion that the naive model
 is preferable for decision support. According to the naive model, nobody
 should receive treatment, as it predicts higher risk under treatment
-(setting a to 1) than under no treatment (setting a to 0).
+(setting $`a`$ to 1) than under no treatment (setting a to 0).
 
 This example highlights a fundamental issue: a model that performs well
 in predicting observed outcomes may not provide accurate predictions

@@ -3,15 +3,16 @@
 Provides methods to evaluate predictive performance of models that
 estimate risks under hypothetical intervention scenarios
 (interventional/causal/counterfactual predictions) with observational
-data. Inverse probability of treatment weighting (IPTW) is used to
-construct a pseudopopulation in which all individuals receive a
-specified intervention, enabling assessment of agreement between
-predicted risks and observed outcomes under that intervention. Supports
-binary and time-to-event outcomes under binary interventions, with
-performance measures including AUC, Brier score, observed-expected
-ratio, and calibration plots. Methods implemented in this pacakge are
-based on work by [Keogh and Van Geloven
-(2024)](https://doi.org/10.1097/EDE.0000000000001713).
+data subject to treatment-outcome confounding. Inverse probability of
+treatment weighting (IPTW) is used to construct a pseudopopulation in
+which all individuals receive a specified intervention, enabling
+assessment of agreement between predicted risks under the intervention
+and observed outcomes in the pseudo-population corresponding to that
+intervention. Supports binary and time-to-event outcomes under binary
+interventions made at a single time point. Performance measures
+supported are AUC, Brier score, observed-expected ratio, and calibration
+plots. Methods implemented in this pacakge are based on work by [Keogh
+and Van Geloven (2024)](https://doi.org/10.1097/EDE.0000000000001713).
 
 ## Installation
 
@@ -19,27 +20,36 @@ The development version of ipeval can be installed from
 [GitHub](https://github.com/) with:
 
 ``` r
+
 # install.packages("devtools")
 devtools::install_github("jvelumc/ipeval")
 ```
 
 ``` r
+
 library(ipeval)
 ```
 
 ## Usage
 
-To demonstrate package usage, we require data and prediction models. We
-simulate data for binary outcome $Y$ and point treatment $A$, with the
-relation between $A$ and $Y$ confounded by variable $L$. Variable $P$ is
-a prognostic variable for only the outcome. The treatment reduces the
-risk on a bad outcome ($Y = 1$) in this example.
+Inputs required to the functions in this package include: (1) a
+validation data set in which the performance of an interventional
+prediction model is to be evaluated, and (2) models from which
+predictions can be made under a specified binary intervention for
+individuals in the validation data. To demonstrate package usage, we
+assume that a development data set has been used to develop the
+interventional prediction models. In this illustration, we simulate
+development data for binary outcome $`Y`$ and point treatment $`A`$,
+with the relation between $`A`$ and $`Y`$ confounded by variable $`L`$.
+Variable $`P`$ is a prognostic variable for only the outcome. The
+treatment reduces the risk of a bad outcome ($`Y = 1`$) in this example.
 
 ![Figure 1. DAG for toy example](reference/figures/dag.png)
 
 Figure 1. DAG for toy example
 
 ``` r
+
 simulate_data <- function(n, seed) {
   data <- data.frame(id = 1:n)
   data$L <- rnorm(n)
@@ -52,9 +62,18 @@ simulate_data <- function(n, seed) {
 df_dev <- simulate_data(n = 2000, seed = 1)
 ```
 
-We will create a couple of prediction models using the development data.
+Suppose that the aim is to develop a model for informing whether
+patients should receive treatment or not, by providing estimates of what
+their risk would be if they were treated and what it would be if they
+were untreated. We create two prediction models using the development
+data, from which such predictions could be obtained. The ‘naive
+model’and the ’causal model’ both include A and P as predictors for Y.
+However, the ‘naive model’ ignores the confounding by L, and the ‘causal
+model’ controls for the confounding by L through inverse probability
+weights. A third ‘model’ just generates predictions randomly.
 
 ``` r
+
 # naive model, not accounting for confounding variable L
 naive_model <- glm(Y ~ A + P, family = "binomial", data = df_dev)
 
@@ -63,13 +82,13 @@ trt_model <- glm(A ~ L, family = "binomial", data = df_dev)
 propensity_score <- predict(trt_model, type = "response")
 df_dev$iptw <- 1 / ifelse(df_dev$A == 1, propensity_score, 1 - propensity_score)
 causal_model <- glm(Y ~ A + P, family = "binomial", data = df_dev, weights = iptw)
-#> Warning in eval(family$initialize): non-integer #successes in a binomial glm!
 
 # a model that randomly predicts something, not very good probably
 random_predictions <- runif(5000, 0, 1)
 ```
 
 ``` r
+
 print(coefficients(naive_model))
 #> (Intercept)           A           P 
 #>  -0.1088558   0.3407801   1.1878727
@@ -78,12 +97,13 @@ print(coefficients(causal_model))
 #>   0.3862409  -0.6863653   1.1949409
 ```
 
-Both models can generate predictions under treatment (setting $a$ to 1)
-and predictions under no treatment ($a$ to 0). If using the predictions
-for decision making, according to the naive model, no patient should be
+The naive and causal models can generate predictions under treatment
+(setting $`A`$ to 1) and predictions under no treatment ($`A`$ to 0),
+given values of the predictors $`P`$. If using the predictions for
+decision making, according to the naive model, no patient should be
 treated, as patients that get treated have a higher risk for the
-outcome. The causal model correctly infers that treatment benefits
-patients.
+outcome. The causal model, however, correctly infers that treatment
+benefits patients (as the coefficient for $`A`$ is negative).
 
 We are now interested in how the models perform in an external
 validation dataset. This dataset can have a different causal structure
@@ -91,49 +111,15 @@ from the original development dataset. In this example, the data is
 simulated in the same way.
 
 ``` r
+
 df_val <- simulate_data(n = 5000, seed = 2)
 ```
 
-In validation studies, it is common to leave the data as it is, and
-compute the performance metrics on this observed dataset, where some
-patients were treated and others were not, and treatment assignment is
-dependent on confounders. This package has a convenience function that
-can do this, but it is not recommended to use it. For illustration
-purposes, we use it here nonetheless.
-
-``` r
-observed_score(
-  object = list(
-    "random" = random_predictions,
-    "naive model" = naive_model,
-    "causal model" = causal_model
-  ),
-  data = df_val, 
-  outcome = Y,
-  metrics = c("auc", "brier", "oeratio")
-)
-#> 
-#>         model   auc brier oeratio
-#>        random 0.505 0.331   1.010
-#>   naive model 0.764 0.198   0.998
-#>  causal model 0.741 0.207   1.001
-```
-
-The naive model appears to outperform the causal model. These
-performance measures represent the performance of the models under the
-treatment assignment strategy present in the validation data. If these
-models were to be used for decision-making, the treatment assignment
-mechanism would change, and these performance estimates would no longer
-be relevant.
-
-For example, the models may be used to inform whether patients should
-receive treatment or not. For patients and clinicians, it is then
-important to know what their treated risk would be and their untreated
-risk. It follows that these treated risks should be accurate compared to
-the outcomes patients would get if they were to be treated, and that the
-untreated risks should be accurate compared to the outcomes they would
-get if left untreated. Thus, the question that we would like to have
-answered is the following:
+For a well performing model, the predictions under treatment should be
+accurate compared to the outcomes patients would have if they were to be
+treated, and the predictions under treatment should be accurate compared
+to the outcomes they would have if left untreated. Therefore, the
+question that we would like to answer is the following:
 
 How well does our prediction model perform if we were to treat nobody?
 And if we were to treat everybody?
@@ -141,23 +127,26 @@ And if we were to treat everybody?
 The ipeval package aims to provide tools to answer questions like these.
 The main function
 [`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
-can be used for this. This function estimates several performance
-measures in a setting where all patients where counterfactually given
-the treatment of interest, printing by default the assumptions required
-for valid inference. The first argument is the object to validate. This
-can be a glm model, a coxph model for survival data, or a numeric vector
-corresponding to predicted risks. Multiple models can be specified for
-comparison. Other arguments supplied are the validation data, the
-observed outcomes, a treatment formula for which the left hand side
-denotes the treatment variable and the right hand side the confounders
-required to adjust for treatment assignment, and the hypothetical
-treatment option for which you want to know how well the model performs
-if everyone in the population was (counterfactually) assigned to that
-treatment.
+can be used for this. This function estimates several predictive
+performance measures in a setting in which all patients were to be given
+the treatment of interest. The assumptions required for valid inference
+are printed by default. The first argument of
+[`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
+is the object to validate. This can be a glm model, a coxph model for
+survival data, or a numeric vector corresponding to predicted risks
+under the treatment level of interest for each individual in the
+validation data. Multiple models can be specified for comparison. Other
+arguments supplied are the validation data, the observed outcome, a
+treatment formula for which the left hand side denotes the treatment
+variable and the right hand side the confounders required to adjust for
+treatment assignment, and the hypothetical treatment option for which
+you want to know how well the model performs if everyone in the
+population was assigned to that treatment.
 
 If nobody would have been treated:
 
 ``` r
+
 ip_score(
   object = list(
     "random" = random_predictions,
@@ -187,12 +176,12 @@ ip_score(
 #>  causal model 0.766 0.196    1.00
 ```
 
-![](reference/figures/README-unnamed-chunk-8-1.png)
+![](reference/figures/README-unnamed-chunk-7-1.png)
 
-And similarly, we can assess performance if everybody would have been
-treated:
+And similarly, we can assess performance if everybody had been treated:
 
 ``` r
+
 ip_score(
   object = list(
     "random" = random_predictions,
@@ -213,21 +202,68 @@ ip_score(
 #>  causal model 0.739 0.202   0.930
 ```
 
-![](reference/figures/README-unnamed-chunk-9-1.png)
+![](reference/figures/README-unnamed-chunk-8-1.png)
 
-The causal model has better calibration and Brier score for these
-settings. Note that the AUC of the naive model and the causal model are
-equal. AUC is driven entirely by how individuals’ model predictions are
-ranked, not by the magnitude of the predictions. In this simple setting,
-P is the only variable driving prognostic differences between
-individuals (in a pseudopopulation where we counterfactually set
-everyone’s treatment status to $0$). While the models have different
-coefficients for P, individuals are ranked in exactly the same way.
+The causal model has better calibration and Brier score compared to the
+naive model under both treatment settings. Note that the AUC of the
+naive model and the causal model are equal. AUC is driven entirely by
+how individuals’ model predictions are ranked, not by the magnitude of
+the predictions. In this simple setting, P is the only variable driving
+prognostic differences between individuals (in a pseudopopulation where
+we counterfactually set everyone’s treatment status to $`0`$). While the
+models have different coefficients for P, individuals are ranked in
+exactly the same way.
 
+The function
 [`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md)
 also supports stabilized weights and bootstrapping for confidence
 intervals around performance measures. Right censored survival data and
 cox models are also supported.
+
+## Traditional validation
+
+In traditional validation studies, it is common to leave the data as it
+is, and compute the performance metrics on this observed dataset, where
+some patients were treated and others were not, and treatment assignment
+is dependent on confounders. For didactic purposes, this package has a
+convenience function that can do this. Note that we do not specify the
+treatment level under which predictions are to be made and compared
+against corresponding outcomes. The resulting performance measures
+represent performance of the models in a population where some patients
+were treated and others were not, according to some treatment assignment
+mechanism present in the validation data.
+
+``` r
+
+observed_score(
+  object = list(
+    "random" = random_predictions,
+    "naive model" = naive_model,
+    "causal model" = causal_model
+  ),
+  data = df_val, 
+  outcome = Y,
+  metrics = c("auc", "brier", "oeratio")
+)
+#> 
+#>         model   auc brier oeratio
+#>        random 0.505 0.331   1.010
+#>   naive model 0.764 0.198   0.998
+#>  causal model 0.741 0.207   1.001
+```
+
+Note that the naive model now appears to outperform the causal model.
+These performance measures represent the performance of the models under
+the treatment assignment strategy present in the validation data. These
+performance estimates are a mixture of performance of the estimated risk
+under treatment of patients that were treated, and the estimated risk
+under no treatment of patients that were not treated. It does not assess
+the performance of risks under treatment of patients that were not
+treated and vice versa. If these models were to be used for
+decision-making, the treatment assignment mechanism would change, and
+these performance estimates would no longer be relevant.
+
+## Further reading
 
 A more detailed motivation is given in [this
 vignette](https://jvelumc.github.io/ipeval/articles/ipeval.html). How to

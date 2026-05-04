@@ -1,6 +1,7 @@
 # Evaluating performance in time-to-event data
 
 ``` r
+
 library(ipeval)
 library(survival)
 ```
@@ -8,18 +9,22 @@ library(survival)
 This vignette demonstrates how to estimate counterfactual performance
 metrics in right censored survival data.
 
-Just like in the binary outcome, a IPT-weighted pseudopopulation is
-built which represents a situation in which everybody gets the treatment
-level of interest. On top of that, inverse probability of censoring
-weights are used such that the pseudopopulation also represents a
-situation where nobody gets censored.
+Just like in the binary outcome, an IP-weighted pseudopopulation is
+created which represents a situation in which everybody gets the
+treatment level of interest. On top of that, inverse probability of
+censoring weights are used such that the pseudopopulation also
+represents a situation where nobody gets censored.
 
 ## Example 1, non informative censoring
 
-We simulate some time-to-event data, where approximately half of
-patients get censored.
+We simulate time-to-event data, where approximately half of patients get
+censored. In this example, we use a more complex causal structure, with
+two confounders ($`L1`$ and $`L2`$) and two prognostic variables ($`P1`$
+and $`P2`$). $`L1`$ and $`P1`$ are standard normal variables, and $`L2`$
+and $`P2`$ are binary variables.
 
 ``` r
+
 simulate_time_to_event <- function(n, constant_baseline_haz, LP) {
   u <- runif(n)
   -log(u) / (constant_baseline_haz * exp(LP))
@@ -69,6 +74,7 @@ summary(df_dev$status)
 Fit some models to validate:
 
 ``` r
+
 model_naive <- coxph(
   formula = Surv(time, status) ~ P1 + P2 + A,
   data = df_dev
@@ -96,10 +102,11 @@ coefficients(model_causal)
 
 The naive model estimates higher risk for treated patients than for
 untreated patients. The causal model correctly infers that treatment
-benefits patients. Note that the ‘true’ effect of $A$ was generated
-within a model that also conditions on $L1$ and $L2$. Due to
-non-collapsibility, the estimated coefficient is not expected to
-coincide with the effect used in the data-generating mechanism.
+benefits patients (as the coefficient for $`A`$ is negative). Note that
+the ‘true’ effect of $`A`$ was generated within a model that also
+conditions on $`L1`$ and $`L2`$. Due to non-collapsibility, the
+estimated coefficient is not expected to coincide with the effect used
+in the data-generating mechanism.
 
 We also simulate some validation data. In this example, we use the same
 data generating mechanism. We are interested in the predictive
@@ -107,6 +114,7 @@ performance if every patient were to be assigned to treatment and
 remained uncensored, with a prediction horizon of 5 years.
 
 ``` r
+
 df_val <- simulate_data(n = 10000, seed = 234)
 ```
 
@@ -115,6 +123,7 @@ the outcome. As we have non-informative censoring in this example, we
 specify our censoring model to be estimated with Kaplan-Meier:
 
 ``` r
+
 cfs <- ip_score(
   object = list("naive model" = model_naive, "causal model" = model_causal),
   data = df_val,
@@ -152,6 +161,7 @@ the same prediction model as in example 1, but add an
 informative-censoring mechanism to the validation dataset.
 
 ``` r
+
 df_val$censortime <- simulate_time_to_event(10000, 0.04, 0.1*df_val$L1 + 0.5*df_val$P2)
 summary(df_val$censortime)
 #>      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
@@ -176,6 +186,7 @@ the censoring distribution is estimated with this expression, from which
 the inverse probability of **censoring** weights are computed.
 
 ``` r
+
 ip_score(
   object = list("naive model" = model_naive, "causal model" = model_causal),
   data = df_val,

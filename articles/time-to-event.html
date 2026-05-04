@@ -69,16 +69,32 @@
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/therneau/survival" class="external-link">survival</a></span><span class="op">)</span></span></code></pre></div>
 <p>This vignette demonstrates how to estimate counterfactual performance
 metrics in right censored survival data.</p>
-<p>Just like in the binary outcome, a IPT-weighted pseudopopulation is
-built which represents a situation in which everybody gets the treatment
-level of interest. On top of that, inverse probability of censoring
-weights are used such that the pseudopopulation also represents a
-situation where nobody gets censored.</p>
+<p>Just like in the binary outcome, an IP-weighted pseudopopulation is
+created which represents a situation in which everybody gets the
+treatment level of interest. On top of that, inverse probability of
+censoring weights are used such that the pseudopopulation also
+represents a situation where nobody gets censored.</p>
 <div class="section level2">
 <h2 id="example-1-non-informative-censoring">Example 1, non informative censoring<a class="anchor" aria-label="anchor" href="#example-1-non-informative-censoring"></a>
 </h2>
-<p>We simulate some time-to-event data, where approximately half of
-patients get censored.</p>
+<p>We simulate time-to-event data, where approximately half of patients
+get censored. In this example, we use a more complex causal structure,
+with two confounders
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">L1</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">L2</annotation></semantics></math>)
+and two prognostic variables
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">P1</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">P2</annotation></semantics></math>).
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">L1</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">P1</annotation></semantics></math>
+are standard normal variables, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">L2</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">P2</annotation></semantics></math>
+are binary variables.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulate_time_to_event</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">constant_baseline_haz</span>, <span class="va">LP</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">u</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
@@ -151,7 +167,9 @@ patients get censored.</p>
 <span><span class="co">#&gt;  0.3993561  0.5819777 -0.4099308</span></span></code></pre></div>
 <p>The naive model estimates higher risk for treated patients than for
 untreated patients. The causal model correctly infers that treatment
-benefits patients. Note that the ‘true’ effect of
+benefits patients (as the coefficient for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
+is negative). Note that the ‘true’ effect of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
 was generated within a model that also conditions on
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mn>1</mn></mrow><annotation encoding="application/x-tex">L1</annotation></semantics></math>
