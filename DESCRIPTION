@@ -1,7 +1,7 @@
 Package: ipeval
 Type: Package
 Title: Evaluation of Interventional Predictions 
-Version: 0.0.1
+Version: 0.1.0
 Authors@R: c(
     person(
       "Jasper", "van Egeraat",
@@ -10,11 +10,14 @@ Authors@R: c(
     ),
     person(
       "Nan", "van Geloven",
-      role = "aut"
+      role = c("aut", "cph")
     ),
     person(
       "Ruth", "Keogh",
-      role = "aut"
+      role = c("aut", "cph")
+    ),
+    person(
+      "Leiden University Medical Center", role = "fnd"
     )
   )
 Description: Provides methods to evaluate predictive performance of models that 
@@ -26,8 +29,11 @@ Description: Provides methods to evaluate predictive performance of models that
     predicted risks under the intervention and observed outcomes in the 
     pseudo-population corresponding to that intervention. Package supports 
     binary and time-to-event outcomes under binary interventions made at a 
-    single time point. Performance measures supported are AUC, Brier score, 
-    observed-expected ratio, and calibration plots.
+    single time point. Performance measures supported are AUC (Area Under the 
+    receiving operating characteristic Curve), Brier score, 
+    observed-expected ratio, and calibration plots. Methods implemented in this 
+    package are based on work by Keogh and Van Geloven (2024) 
+    <DOI:10.1097/EDE.0000000000001713>
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -38,7 +44,8 @@ Imports:
     prodlim
 Depends: 
     R (>= 3.5)
-URL: https://jvelumc.github.io/ipeval/
+URL: https://jvelumc.github.io/ipeval/, https://github.com/jvelumc/ipeval
+BugReports: https://github.com/jvelumc/ipeval/issues
 Suggests: 
     knitr,
     rmarkdown,
