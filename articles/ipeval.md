@@ -165,8 +165,9 @@ Both models can generate predictions under treatment (setting $`A`$
 to 1) and predictions under no treatment ($`A`$ to 0), given values of
 the predictors P. If using the predictions for decision making,
 according to the naive model, no patient should be treated, as patients
-that get treated have a higher risk for the outcome. The reason for this
-is that individuals with high values of $`L`$ are more likely to receive
+that get treated have a higher risk for the outcome (since the
+coefficient for $`A`$ is positive). The reason for this is that
+individuals with high values of $`L`$ are more likely to receive
 treatment. Although treatment reduces risk, these individuals typically
 remain at higher risk than untreated individuals because $`L`$ also
 directly increases the outcome risk. As a result, the naive model
