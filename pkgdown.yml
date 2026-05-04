@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   ipeval: ipeval.html
   time-to-event: time-to-event.html
-last_built: 2026-05-04T12:31Z
+last_built: 2026-05-04T13:20Z
 urls:
   reference: https://jvelumc.github.io/ipeval/reference
   article: https://jvelumc.github.io/ipeval/articles

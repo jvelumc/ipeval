@@ -47,3 +47,27 @@ observed_score(
 ## Value
 
 Performance metrics in the observed dataset.
+
+## Examples
+
+``` r
+n <- 1000
+
+data <- data.frame(L = rnorm(n), P = rnorm(n))
+data$A <- rbinom(n, 1, plogis(data$L))
+data$Y <- rbinom(n, 1, plogis(0.1 + 0.5*data$L + 0.7*data$P - 2*data$A))
+
+random <- runif(n, 0, 1)
+model <- glm(Y ~ A + P, data = data, family = "binomial")
+
+observed_score(
+  object = list("ran" = random, "mod" = model),
+  data = data,
+  outcome = Y,
+  metrics = c("auc", "brier", "oeratio")
+)
+#> 
+#>  model   auc brier oeratio
+#>    ran 0.525 0.318   0.688
+#>    mod 0.742 0.188   1.000
+```
