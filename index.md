@@ -1,5 +1,7 @@
 # ipeval
 
+[![R-CMD-check](https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml)
+
 Provides methods to evaluate predictive performance of models that
 estimate risks under hypothetical intervention scenarios
 (interventional/causal/counterfactual predictions) with observational
