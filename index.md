@@ -36,9 +36,9 @@ Inputs required to the functions in this package include: (1) a
 validation data set in which the performance of an interventional
 prediction model is to be evaluated, and (2) models from which
 predictions can be made under a specified binary intervention for
-individuals in the validation data. To demonstrate package usage, we
-assume that a development data set has been used to develop the
-interventional prediction models. In this illustration, we simulate
+individuals in the validation data.
+
+To develop the interventional prediction model, we first simulate
 development data for binary outcome $`Y`$ and point treatment $`A`$,
 with the relation between $`A`$ and $`Y`$ confounded by variable $`L`$.
 Variable $`P`$ is a prognostic variable for only the outcome. The
@@ -66,8 +66,8 @@ Suppose that the aim is to develop a model for informing whether
 patients should receive treatment or not, by providing estimates of what
 their risk would be if they were treated and what it would be if they
 were untreated. We create two prediction models using the development
-data, from which such predictions could be obtained. The ‘naive
-model’and the ’causal model’ both include A and P as predictors for Y.
+data, from which such predictions could be obtained. The ‘naive model’
+and the ‘causal model’ both include A and P as predictors for Y.
 However, the ‘naive model’ ignores the confounding by L, and the ‘causal
 model’ controls for the confounding by L through inverse probability
 weights. A third ‘model’ just generates predictions randomly.
@@ -99,16 +99,18 @@ print(coefficients(causal_model))
 
 The naive and causal models can generate predictions under treatment
 (setting $`A`$ to 1) and predictions under no treatment ($`A`$ to 0),
-given values of the predictors $`P`$. If using the predictions for
-decision making, according to the naive model, no patient should be
-treated, as patients that get treated have a higher risk for the
-outcome. The causal model, however, correctly infers that treatment
-benefits patients (as the coefficient for $`A`$ is negative).
+given values of the predictors $`P`$. The estimated coefficient for
+$`A`$ of the naive model is positive due to confounding. As a
+consequence, the risk under treatment is estimated to be higher than
+under no treatment, so when this model is used for decision making, no
+patient should be treated. The causal model, however, correctly infers
+that treatment benefits patients (as the coefficient for $`A`$ is
+negative).
 
 We are now interested in how the models perform in an external
-validation dataset. This dataset can have a different causal structure
-from the original development dataset. In this example, the data is
-simulated in the same way.
+validation dataset. In this example, the data is simulated in the same
+way as the development data. In practice, the causal structure in the
+validation data can be different from the original development data.
 
 ``` r
 
@@ -117,9 +119,9 @@ df_val <- simulate_data(n = 5000, seed = 2)
 
 For a well performing model, the predictions under treatment should be
 accurate compared to the outcomes patients would have if they were to be
-treated, and the predictions under treatment should be accurate compared
-to the outcomes they would have if left untreated. Therefore, the
-question that we would like to answer is the following:
+treated. Similarly, the predictions under no treatment should be
+accurate compared to the outcomes they would have if left untreated.
+Therefore, the question that we would like to answer is the following:
 
 How well does our prediction model perform if we were to treat nobody?
 And if we were to treat everybody?
@@ -263,7 +265,8 @@ treated and vice versa. If these models were to be used for
 decision-making, the treatment assignment mechanism would change, and
 these performance estimates would no longer be relevant. For this
 reason, the predictive performance under interventions should be
-estimated, using $`ip_score()`$.
+estimated, using
+[`ip_score()`](https://jvelumc.github.io/ipeval/reference/ip_score.md).
 
 ## Further reading
 

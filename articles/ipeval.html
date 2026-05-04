@@ -222,17 +222,17 @@ probability weights:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coefficients</a></span><span class="op">(</span><span class="va">model_causal</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; (Intercept)           A           P </span></span>
 <span><span class="co">#&gt;   0.4936374  -0.7629892   1.1213506</span></span></code></pre></div>
-<p>Both models can generate predictions under treatment (setting
+<p>The naive and causal models can generate predictions under treatment
+(setting
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
 to 1) and predictions under no treatment
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-to 0), given values of the predictors P. If using the predictions for
-decision making, according to the naive model, no patient should be
-treated, as patients that get treated have a higher risk for the outcome
-(since the coefficient for
+to 0), given values of the predictors
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>.
+The estimated coefficient for
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>
-is positive). The reason for this is that individuals with high values
-of
+of the naive model is positive due to confounding. This arises because
+individuals with high values of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>
 are more likely to receive treatment. Although treatment reduces risk,
 these individuals typically remain at higher risk than untreated
@@ -240,7 +240,10 @@ individuals because
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>
 also directly increases the outcome risk. As a result, the naive model
 captures associations induced by the treatment assignment mechanism
-rather than the underlying causal effect.</p>
+rather than the underlying causal effect. As a consequence, the risk
+under treatment is estimated to be higher than under no treatment,
+implying that this model would recommend withholding treatment for all
+patients.</p>
 <p>The causal model correctly infers that treatment benefits patients.
 Note that the ‘true’ effect of A was generated within a model that also
 conditions on L. Due to non-collapsibility, the estimated coefficient is
