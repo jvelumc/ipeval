@@ -7,10 +7,19 @@ todo
 - refactor tests?
 - testing when supplying data.table & tibbles instead of data.frames
 
+
+
+- waarom is attr(outcome$observed, "dimnames") NULL? van long iig.
+
+
+
 discuss
 - event/censor ties for cox censoring
 - null model on survival data?
 
 - moeten visits even ver uit elkaar liggen?
 - als performance time horizon = 5 maar ik heb data tot 10, mag data na t>5
-    gebruikt worden voor fitten ipcw model?
+    gebruikt worden voor fitten (artifical) censoring model?
+- We gaan er nu van uit dat treatment model op elk visit gelijk is. Het is niet
+    ondenkbaar dat er voor verschillende visits verschillende treatment modellen
+    nodig zijn. Misschien kan dit al, door indicators in treatment model te doen?

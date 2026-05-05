@@ -52,7 +52,7 @@ simulate_longitudinal <- function(n, fix_trt = NULL) {
   colnames(A) <- paste0("A", 0:(n_visits - 1))
   colnames(L) <- paste0("L", 0:(n_visits - 1))
 
-  data.table(id = 1:n, time, status, A, L, U)
+  data.frame(id = 1:n, time, status, A, L, U)
 }
 
 make_long <- function(data) {
