@@ -41,8 +41,7 @@ RoxygenNote: 7.3.3
 Imports: 
     stats,
     survival,
-    prodlim,
-    data.table
+    prodlim
 Depends: 
     R (>= 3.5)
 URL: https://jvelumc.github.io/ipeval/, https://github.com/jvelumc/ipeval

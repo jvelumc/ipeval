@@ -1,12 +1,16 @@
 todo
 - CRAN
-  - check vignettes/readme/doc/DESCRIPTION
 - print when stabilized weights
 - longitudinal trts
 - multiple censoring mechanisms
 - nonbinary treatments?
 - refactor tests?
+- testing when supplying data.table & tibbles instead of data.frames
 
 discuss
 - event/censor ties for cox censoring
 - null model on survival data?
+
+- moeten visits even ver uit elkaar liggen?
+- als performance time horizon = 5 maar ik heb data tot 10, mag data na t>5
+    gebruikt worden voor fitten ipcw model?
