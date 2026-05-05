@@ -21,6 +21,24 @@
 #'
 #' @returns Performance metrics in the observed dataset.
 #' @export
+#'
+#' @examples
+#' n <- 1000
+#'
+#' data <- data.frame(L = rnorm(n), P = rnorm(n))
+#' data$A <- rbinom(n, 1, plogis(data$L))
+#' data$Y <- rbinom(n, 1, plogis(0.1 + 0.5*data$L + 0.7*data$P - 2*data$A))
+#'
+#' random <- runif(n, 0, 1)
+#' model <- glm(Y ~ A + P, data = data, family = "binomial")
+#'
+#' observed_score(
+#'   object = list("ran" = random, "mod" = model),
+#'   data = data,
+#'   outcome = Y,
+#'   metrics = c("auc", "brier", "oeratio")
+#' )
+
 observed_score <- function(object, data, outcome,
                     metrics = c("auc", "brier", "oeratio", "calplot")) {
 
