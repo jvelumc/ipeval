@@ -79,7 +79,7 @@ test_that("wrong input throws sensible errors", {
   # other
   expect_error(
     ip_score(predictions, my_data, status, A ~ L, 1,
-             iptw = runif(n), bootstrap = 50),
+             iptw = runif(n), bootstrap = 50, bootstrap_progress = FALSE),
     "can't bootstrap"
   )
 
@@ -617,7 +617,8 @@ test_that("results are in between lower & upper bootstrap", {
     treatment_formula = A ~ L,
     treatment_of_interest = 0,
     bootstrap = 200,
-    null_model = FALSE
+    null_model = FALSE,
+    bootstrap_progress = FALSE
   )
 
   expect_true(
@@ -670,6 +671,7 @@ test_that("results are in between lower & upper bootstrap, surv, cox censor", {
     time_horizon = horizon,
     cens_formula = ~ L + P + A,
     bootstrap = 100,
+    bootstrap_progress = FALSE,
     null_model = FALSE
   )
 

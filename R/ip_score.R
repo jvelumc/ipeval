@@ -225,8 +225,7 @@ compute_metrics <- function(ip_object) {
           obs_trt = ip_object$treatment$observed,
           cf_pred = x,
           cf_trt = ip_object$treatment$treatment_of_interest,
-          ipw = weights,
-          nullpred = ip_object$predictions[["null model"]]
+          ipw = weights
         )
       }
     )
