@@ -26,3 +26,4 @@ discuss
     nodig zijn. Misschien kan dit al, door indicators in treatment model te doen?
 - Zijn de IPT-weights relevant van mensen die niet de treatment of interest hebben?
 - time dependent confounders effect op censoring?
+- null model is dat gewoon weighted mean van outcome in pseudopop?

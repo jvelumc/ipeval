@@ -76,7 +76,8 @@ add_lag_terms <- function(df, var, lag = 1, fill = 0) {
 #' @export
 ip_score_long <- function(probabilities, data_outcome, data_long, time_horizon,
                           treatment_formula, treatment_of_interest,
-                          metrics = c("auc", "brier", "oeratio", "calplot")) {
+                          metrics = c("auc", "brier", "oeratio", "calplot"),
+                          null_model = TRUE) {
 
   # assert:
   # - probabilities and data outcome same length
@@ -110,6 +111,10 @@ ip_score_long <- function(probabilities, data_outcome, data_long, time_horizon,
   ipc <- get_ipcw(ipcw = rep(1, nrow(data_flat)))
 
   predictions <- get_predictions(probabilities, data_flat)
+
+  if (null_model) {
+    predictions <- fit_null(treatment, outcome, predictions, ipt, ipc)
+  }
 
   ip_object <- construct_ip_object(
     outcome = outcome,

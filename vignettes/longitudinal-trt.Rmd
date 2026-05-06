@@ -57,7 +57,7 @@ simulate_longitudinal <- function(n, fix_trt = NULL, seed = 123) {
   A[, 1] <- simulate_A(1, L, fix_trt)
 
   for (i in 2:n_visits) {
-    L[, i] <- rnorm(n, 0.8 * L[, i - 1] - A[, i - 1] + 0.1 * (i-i) + U)
+    L[, i] <- rnorm(n, 0.8 * L[, i - 1] - A[, i - 1] + 0.1 * (i-1) + U)
     A[, i] <- ifelse(A[, i - 1] == 1, rep(1, n), simulate_A(i, L, fix_trt))
   }
 
@@ -231,6 +231,7 @@ ip_score_long(
   time_horizon = 5, 
   treatment_formula = A ~ A_lag_1 * L,
   treatment_of_interest = rep(0,5),
+  metrics = c("auc", "brier", "scaled_brier", "oeratio", "calplot")
 )
 ```
 
@@ -244,88 +245,116 @@ The function ```ip_score_long()``` works roughly as follows:
 4. We create a 'flat' (1 row per patient) pseudopopulation of all patients that were faithful to the treatment of interest, and use their product iptw as the weight. 
 5. We compute the metrics on this pseudopopulation. 
 
+In steps 4 and 5 we simplify the problem by converting the longitudinal treatment strategy into a binary one, which is TRUE if patient is faithful to longitudinal treatment. This allows us to reuse the function logic of the point treatment ```ip_score()```.
+
+Censoring due to non-artifical mechanisms is not implemented yet.  
+
 # Reproducing results Keogh and Van Geloven (2024)
 
-Reproduce results from eTable 7. n = 3000, 1000 simulation runs:
+Reproduce results from eTable 7. n = 3000, 1000 simulation runs. Scroll down for the results.
 
 ```{r}
+metrics <- c("oeratio", "auc", "brier", "scaled_brier")
+
 simulation_run <- function(seed) {
   df_dev <- simulate_longitudinal(n = 3000, seed = seed)
   df_dev_long <- make_dev_long(df_dev)
-  models <- fit_long_models(df_dev_long)
+  
+  models <- tryCatch(
+      fit_long_models(df_dev_long),
+      error = function(e) NULL
+    )
+  if (is.null(models)) {
+    cat("model building failed in seed ", seed, "\n")
+    return(NULL)
+  }
   risk0 <- models[[1]]
   risk1 <- models[[2]]
-  
+
   df_val <- simulate_longitudinal(n = 3000, seed = seed + 1)
   predicted0 <- risk0(5, df_val$L0)
   predicted1 <- risk1(5, df_val$L0)
-  
+
   df_val_outcomes <- df_val[, c("id", "time", "status")]
   df_val_long <- wide_to_long(
-    df_val, 
-    baseline_variables = c("id", "L0"), 
-    wide_variables = list("A" = paste0("A", 0:4), "L" = paste0("L", 0:4)), 
+    df_val,
+    baseline_variables = c("id", "L0"),
+    wide_variables = list("A" = paste0("A", 0:4), "L" = paste0("L", 0:4)),
     visit_times = 0:4,
     outcome_times = df_val$time
   )
   df_val_long <- add_lag_terms(df_val_long, "A")
-  
+
   score0 <- ip_score_long(
-    probabilities = predicted0, 
-    data_outcome = df_val_outcomes, 
-    data_long = df_val_long, 
-    time_horizon = 5, 
+    probabilities = predicted0,
+    data_outcome = df_val_outcomes,
+    data_long = df_val_long,
+    time_horizon = 5,
     treatment_formula = A ~ A_lag_1 * L,
     treatment_of_interest = rep(0,5),
+    metrics = metrics,
+    null_model = FALSE
   )
   score1 <- ip_score_long(
-    probabilities = predicted1, 
-    data_outcome = df_val_outcomes, 
-    data_long = df_val_long, 
-    time_horizon = 5, 
+    probabilities = predicted1,
+    data_outcome = df_val_outcomes,
+    data_long = df_val_long,
+    time_horizon = 5,
     treatment_formula = A ~ A_lag_1 * L,
     treatment_of_interest = rep(1,5),
+    metrics = metrics,
+    null_model = FALSE
   )
-  
-  # use same seed as df_val so L0's and predictions coincide. Afterwards 
+
+  # use same seed as df_val so L0's and predictions coincide. Afterwards
   # treatment is set fixed to never or always to estimate 'truth'.
   df_true0 <- simulate_longitudinal(n = 3000, fix_trt = 0, seed = seed + 1)
   df_true1 <- simulate_longitudinal(n = 3000, fix_trt = 1, seed = seed + 1)
-  
-  score0_truth <- observed_score(predicted0, df_true0, status)
-  score1_truth <- observed_score(predicted1, df_true1, status)
-  
-  
+
+  score0_truth <- observed_score(predicted0, df_true0, status,
+                                 metrics = metrics)
+  score1_truth <- observed_score(predicted1, df_true1, status, metrics = metrics)
+
+
   return(
     list(
       "never-oe-cf" = score0$score$oeratio,
       "never-oe-truth" = score0_truth$score$oeratio,
       "never-oe-bias" = score0$score$oeratio - score0_truth$score$oeratio,
-      
+
       "never-auc-cf" = score0$score$auc,
       "never-auc-truth" = score0_truth$score$auc,
       "never-auc-bias" = score0$score$auc - score0_truth$score$auc,
-      
+
       "never-brier-cf" = score0$score$brier,
       "never-brier-truth" = score0_truth$score$brier,
       "never-brier-bias" = score0$score$brier - score0_truth$score$brier,
-      
+
+      "never-scaled_brier-cf" = score0$score$scaled_brier,
+      "never-scaled_brier-truth" = score0_truth$score$scaled_brier,
+      "never-scaled_brier-bias" = score0$score$scaled_brier - score0_truth$score$scaled_brier,
+
       "always-oe-cf" = score1$score$oeratio,
       "always-oe-truth" = score1_truth$score$oeratio,
       "always-oe-bias" = score1$score$oeratio - score1_truth$score$oeratio,
-      
+
       "always-auc-cf" = score1$score$auc,
       "always-auc-truth" = score1_truth$score$auc,
       "always-auc-bias" = score1$score$auc - score1_truth$score$auc,
-      
+
       "always-brier-cf" = score1$score$brier,
       "always-brier-truth" = score1_truth$score$brier,
-      "always-brier-bias" = score1$score$brier - score1_truth$score$brier
+      "always-brier-bias" = score1$score$brier - score1_truth$score$brier,
+
+      "always-scaled_brier-cf" = score1$score$scaled_brier,
+      "always-scaled_brier-truth" = score1_truth$score$scaled_brier,
+      "always-scaled_brier-bias" = score1$score$scaled_brier - score1_truth$score$scaled_brier
     )
   )
 }
 
 results <- lapply(1:1000, simulation_run)
+results <- Filter(Negate(is.null), results)
 ```
 
 
@@ -342,7 +371,7 @@ summarize <- function(results, key, label, fct = mean) {
 }
 
 for (x in c("never", "always")) {
-  for (y in c("oe", "auc", "brier")) {
+  for (y in c("oe", "auc", "scaled_brier", "brier")) {
 
     cat(sprintf("%s treated, %s\n", x, y))
     summarize(results, paste0(x, "-", y, "-truth"), "truth")
@@ -353,5 +382,6 @@ for (x in c("never", "always")) {
   }
 }
 ```
+All estimates look fine and similar to eTable7, except for the scaled Brier score. I do not yet know why this is. 
 
 ![eTable 7](etable7.png)
