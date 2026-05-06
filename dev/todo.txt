@@ -10,7 +10,8 @@ todo
 
 
 - waarom is attr(outcome$observed, "dimnames") NULL? van long iig.
-
+- gaat calibratie plot goed als een van de knots geen patienten heeft met juiste
+  treatment?
 
 
 discuss
@@ -23,3 +24,5 @@ discuss
 - We gaan er nu van uit dat treatment model op elk visit gelijk is. Het is niet
     ondenkbaar dat er voor verschillende visits verschillende treatment modellen
     nodig zijn. Misschien kan dit al, door indicators in treatment model te doen?
+- Zijn de IPT-weights relevant van mensen die niet de treatment of interest hebben?
+- time dependent confounders effect op censoring?

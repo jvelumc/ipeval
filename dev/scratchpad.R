@@ -31,6 +31,11 @@ cox$coefficients
 
 score <-ip_score(list(naive_model, causal_model), data, Y, A ~ L, 0)
 
+score$ipt$weights[data$A == 1] <- NA
+score
+ip_score(list(naive_model, causal_model), data, Y, A ~ L, 0, iptw = score$ipt$weights)
+
+
 score
 
 bs <- ip_score(list(naive_model, causal_model), data, Y, A ~ L, 0, bootstrap = 10)

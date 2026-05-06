@@ -35,7 +35,8 @@ alpha_A <- -0.5
 alpha_L <- 0.5
 alpha_U <- 0.5
 
-simulate_longitudinal <- function(n, fix_trt = NULL) {
+simulate_longitudinal <- function(n, fix_trt = NULL, seed = 123) {
+  set.seed(seed)
   U <- rnorm(n, 0, 0.1)
 
   A <- matrix(nrow = n, ncol = n_visits)
@@ -77,31 +78,35 @@ simulate_longitudinal <- function(n, fix_trt = NULL) {
   data.frame(id = 1:n, time, status, A, L, U)
 }
 
-df_dev <- simulate_longitudinal(n)
+df_dev <- simulate_longitudinal(n, seed = 1)
 
 # prepare into long format for fitting Cox model
 
-df_dev_long <- wide_to_long(
-  df_dev,
-  baseline_variables = c("id", "time", "status", "L0", "U"),
-  wide_variables = list(A = c("A0", "A1", "A2", "A3", "A4"),
-                        L = c("L0", "L1", "L2", "L3", "L4")),
-  visit_times = c(0,1,2,3,4),
-  outcome_times = df_dev$time
-)
+make_dev_long <- function(df_dev) {
+  df_dev_long <- wide_to_long(
+    df_dev,
+    baseline_variables = c("id", "time", "status", "L0", "U"),
+    wide_variables = list(A = c("A0", "A1", "A2", "A3", "A4"),
+                          L = c("L0", "L1", "L2", "L3", "L4")),
+    visit_times = c(0,1,2,3,4),
+    outcome_times = df_dev$time
+  )
+  
+  df_dev_long$time_start <- df_dev_long$visit_time
+  df_dev_long$time_end <- pmin(df_dev_long$visit_time + 1, df_dev_long$time)
+  df_dev_long$status <- ifelse(
+    df_dev_long$time_end == df_dev_long$time, 
+    df_dev_long$status, 
+    0
+  )
+  df_dev_long$time <- NULL
+  
+  df_dev_long <- add_lag_terms(df_dev_long, "A", 1:4)
+  df_dev_long
+}
 
-df_dev_long$L0 <- ave(df_dev_long$L, df_dev_long$id, FUN = function(x) x[[1]])
-df_dev_long$time_start <- df_dev_long$visit_time
-df_dev_long$time_end <- pmin(df_dev_long$visit_time + 1, df_dev_long$time)
-df_dev_long$status <- ifelse(
-  df_dev_long$time_end == df_dev_long$time, 
-  df_dev_long$status, 
-  0
-)
-df_dev_long$time <- NULL
 
-df_dev_long <- add_lag_terms(df_dev_long, "A", 1:4)
-
+df_dev_long <- make_dev_long(df_dev)
 head(df_dev)
 
 head(df_dev_long)
@@ -111,56 +116,65 @@ Now to fit an interventional prediction model capable of estimating risk under a
 
 ```{r}
 # TODO: this code needs to be refactored & annotated
-ipt_visits <- ipeval:::ipt_weights(df_dev_long, A ~ L * A_lag_1)
-ipeval:::print_model(ipt_visits$model)
 
-df_dev_long$iptw_visits <- ipt_visits$weights
-df_dev_long$iptw_cumprod <- unlist(tapply(df_dev_long$iptw_visits, df_dev_long$id, cumprod))
-
-cox_msm <- coxph(
-  Surv(time_start, time_end, status) ~ A + A_lag_1 + A_lag_2 + A_lag_3 + A_lag_4 + L0,
-  data = df_dev_long,
-  weights = iptw_cumprod
-)
-
-cumhaz <- basehaz(cox_msm, centered = FALSE)$hazard
-event.times <- basehaz(cox_msm, centered = FALSE)$time
-cumhaz.fun <- stepfun(event.times, c(0, cumhaz))
-
-# hazard rate term
-hrt <- function(variable, value) {
-  exp(coef(cox_msm)[variable]*value)
+fit_long_models <- function(df_dev_long) {
+  ipt_visits <- ipeval:::ipt_weights(df_dev_long, A ~ L * A_lag_1)
+  
+  df_dev_long$iptw_visits <- ipt_visits$weights
+  df_dev_long$iptw_cumprod <- unlist(tapply(df_dev_long$iptw_visits,
+                                            df_dev_long$id, cumprod))
+  
+  cox_msm <- coxph(
+    Surv(time_start, time_end, status) ~ A + A_lag_1 + A_lag_2 + A_lag_3 + A_lag_4 + L0,
+    data = df_dev_long,
+    weights = iptw_cumprod
+  )
+  
+  cumhaz <- basehaz(cox_msm, centered = FALSE)$hazard
+  event.times <- basehaz(cox_msm, centered = FALSE)$time
+  cumhaz.fun <- stepfun(event.times, c(0, cumhaz))
+  
+  # hazard rate term
+  hrt <- function(variable, value) {
+    exp(coef(cox_msm)[variable]*value)
+  }
+  
+  # # risk under never treated
+  risk0 <- function(t, L0) {
+    1 - exp(-cumhaz.fun(t)*hrt("L0", L0))
+  }
+  
+  # # risk under always treated
+  risk1 <- function(t, L0) {
+    1 - exp(-(
+      cumhaz.fun(min(t, 1))*
+        hrt("L0", L0)*hrt("A", 1) +
+        
+        (t >= 1) *
+        (cumhaz.fun(min(t, 2)) - cumhaz.fun(1))*
+        hrt("L0", L0)*hrt("A", 1)*hrt("A_lag_1", 1) +
+        
+        (t >= 2) *
+        (cumhaz.fun(min(t, 3)) - cumhaz.fun(2))*
+        hrt("L0", L0)*hrt("A", 1)*hrt("A_lag_1", 1)*hrt("A_lag_2", 1) +
+        
+        (t >= 3) *
+        (cumhaz.fun(min(t, 4)) - cumhaz.fun(3))*
+        hrt("L0", L0)*hrt("A", 1)*hrt("A_lag_1", 1)*hrt("A_lag_2", 1)*hrt("A_lag_3", 1) +
+        
+        (t >= 4) *
+        (cumhaz.fun(min(t, 5)) - cumhaz.fun(4))*
+        hrt("L0", L0)*hrt("A", 1)*hrt("A_lag_1", 1)*hrt("A_lag_2", 1)*
+        hrt("A_lag_3", 1)*hrt("A_lag_4", 1)
+    ))
+  }
+  return(list(risk0, risk1))
 }
 
-# # risk under never treated
-risk0 <- function(t, L0) {
-  1 - exp(-cumhaz.fun(t)*hrt("L0", L0))
-}
+models <- fit_long_models(df_dev_long)
+risk0 <- models[[1]]
+risk1 <- models[[2]]
 
-# # risk under always treated
-risk1 <- function(t, L0) {
-  1 - exp(-(
-    cumhaz.fun(min(t, 1))*
-      hrt("L0", L0)*hrt("A", 1) +
-      
-      (t >= 1) *
-      (cumhaz.fun(min(t, 2)) - cumhaz.fun(1))*
-      hrt("L0", L0)*hrt("A", 1)*hrt("A_lag1", 1) +
-      
-      (t >= 2) *
-      (cumhaz.fun(min(t, 3)) - cumhaz.fun(2))*
-      hrt("L0", L0)*hrt("A", 1)*hrt("A_lag1", 1)*hrt("A_lag2", 1) +
-      
-      (t >= 3) *
-      (cumhaz.fun(min(t, 4)) - cumhaz.fun(3))*
-      hrt("L0", L0)*hrt("A", 1)*hrt("A_lag1", 1)*hrt("A_lag2", 1)*hrt("A_lag3", 1) +
-      
-      (t >= 4) *
-      (cumhaz.fun(min(t, 5)) - cumhaz.fun(4))*
-      hrt("L0", L0)*hrt("A", 1)*hrt("A_lag1", 1)*hrt("A_lag2", 1)*
-      hrt("A_lag3", 1)*hrt("A_lag4", 1)
-  ))
-}
 ```
 
 We can use ```risk0(t, L0)``` to estimate the risk under no treatment at time $t$ for a patient with baseline value $L0$. ```risk1(t, L0)``` estimates risk under treatment.
@@ -175,7 +189,7 @@ This will show the workflow for validating such models when time dependent confo
 The package provides functions to easily generate these data.frames, when starting with data in this wide structure: 
 
 ```{r}
-df_val <- simulate_longitudinal(n = 3000)
+df_val <- simulate_longitudinal(n = 3000, seed = 2)
 head(df_val)
 ```
 
@@ -188,8 +202,8 @@ predicted1 <- risk1(5, df_val$L0)
 
 First, create the data.frame with the surv status:
 ```{r}
-df_outcomes <- df_val[, c("id", "time", "status")]
-head(df_outcomes)
+df_val_outcomes <- df_val[, c("id", "time", "status")]
+head(df_val_outcomes)
 ```
 
 Second, create the data.frame with the time dependent variables. The package provides several convenience functions to help with this. Our treatment model depends on the value of L of the same visit, and previous treatment value.
@@ -209,15 +223,135 @@ head(df_val_long)
 
 We can then call the validation function:
 
-```{r}
+```{r, fig.width=5, fig.height=5}
 ip_score_long(
   probabilities = predicted0, 
-  data_outcome = df_outcomes, 
+  data_outcome = df_val_outcomes, 
   data_long = df_val_long, 
   time_horizon = 5, 
   treatment_formula = A ~ A_lag_1 * L,
   treatment_of_interest = rep(0,5),
 )
-
-
 ```
+
+The assumptions are not yet updated for the longitudinal treatment setting.
+
+The function ```ip_score_long()``` works roughly as follows:
+
+1. It computes the inverse probability of treatment weights at each visit for each patient. 
+2. It computes the product of these per patient.
+3. We label which patients are faithful to the treatment strategy of interest. Patients are still defined to be faithful when they have the event before being able to complete the entire treatment strategy.
+4. We create a 'flat' (1 row per patient) pseudopopulation of all patients that were faithful to the treatment of interest, and use their product iptw as the weight. 
+5. We compute the metrics on this pseudopopulation. 
+
+# Reproducing results Keogh and Van Geloven (2024)
+
+Reproduce results from eTable 7. n = 3000, 1000 simulation runs:
+
+```{r}
+simulation_run <- function(seed) {
+  df_dev <- simulate_longitudinal(n = 3000, seed = seed)
+  df_dev_long <- make_dev_long(df_dev)
+  models <- fit_long_models(df_dev_long)
+  risk0 <- models[[1]]
+  risk1 <- models[[2]]
+  
+  df_val <- simulate_longitudinal(n = 3000, seed = seed + 1)
+  predicted0 <- risk0(5, df_val$L0)
+  predicted1 <- risk1(5, df_val$L0)
+  
+  df_val_outcomes <- df_val[, c("id", "time", "status")]
+  df_val_long <- wide_to_long(
+    df_val, 
+    baseline_variables = c("id", "L0"), 
+    wide_variables = list("A" = paste0("A", 0:4), "L" = paste0("L", 0:4)), 
+    visit_times = 0:4,
+    outcome_times = df_val$time
+  )
+  df_val_long <- add_lag_terms(df_val_long, "A")
+  
+  score0 <- ip_score_long(
+    probabilities = predicted0, 
+    data_outcome = df_val_outcomes, 
+    data_long = df_val_long, 
+    time_horizon = 5, 
+    treatment_formula = A ~ A_lag_1 * L,
+    treatment_of_interest = rep(0,5),
+  )
+  score1 <- ip_score_long(
+    probabilities = predicted1, 
+    data_outcome = df_val_outcomes, 
+    data_long = df_val_long, 
+    time_horizon = 5, 
+    treatment_formula = A ~ A_lag_1 * L,
+    treatment_of_interest = rep(1,5),
+  )
+  
+  # use same seed as df_val so L0's and predictions coincide. Afterwards 
+  # treatment is set fixed to never or always to estimate 'truth'.
+  df_true0 <- simulate_longitudinal(n = 3000, fix_trt = 0, seed = seed + 1)
+  df_true1 <- simulate_longitudinal(n = 3000, fix_trt = 1, seed = seed + 1)
+  
+  score0_truth <- observed_score(predicted0, df_true0, status)
+  score1_truth <- observed_score(predicted1, df_true1, status)
+  
+  
+  return(
+    list(
+      "never-oe-cf" = score0$score$oeratio,
+      "never-oe-truth" = score0_truth$score$oeratio,
+      "never-oe-bias" = score0$score$oeratio - score0_truth$score$oeratio,
+      
+      "never-auc-cf" = score0$score$auc,
+      "never-auc-truth" = score0_truth$score$auc,
+      "never-auc-bias" = score0$score$auc - score0_truth$score$auc,
+      
+      "never-brier-cf" = score0$score$brier,
+      "never-brier-truth" = score0_truth$score$brier,
+      "never-brier-bias" = score0$score$brier - score0_truth$score$brier,
+      
+      "always-oe-cf" = score1$score$oeratio,
+      "always-oe-truth" = score1_truth$score$oeratio,
+      "always-oe-bias" = score1$score$oeratio - score1_truth$score$oeratio,
+      
+      "always-auc-cf" = score1$score$auc,
+      "always-auc-truth" = score1_truth$score$auc,
+      "always-auc-bias" = score1$score$auc - score1_truth$score$auc,
+      
+      "always-brier-cf" = score1$score$brier,
+      "always-brier-truth" = score1_truth$score$brier,
+      "always-brier-bias" = score1$score$brier - score1_truth$score$brier
+    )
+  )
+}
+
+results <- lapply(1:1000, simulation_run)
+```
+
+
+```{r}
+se <- function(x) sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x)))
+
+summarize <- function(results, key, label, fct = mean) {
+  values <- sapply(results, function(x) x[[key]])
+  result <- do.call(fct, args = list(values))
+  cat(sprintf("%-4s %-5s = %8.3f\n",
+              deparse(substitute(fct)),
+              label,
+              result))
+}
+
+for (x in c("never", "always")) {
+  for (y in c("oe", "auc", "brier")) {
+
+    cat(sprintf("%s treated, %s\n", x, y))
+    summarize(results, paste0(x, "-", y, "-truth"), "truth")
+    summarize(results, paste0(x, "-", y, "-cf"), "cf")
+    summarize(results, paste0(x, "-", y, "-bias"), "bias")
+    summarize(results, paste0(x, "-", y, "-bias"), "bias", fct = se)
+    cat("\n")
+  }
+}
+```
+
+![eTable 7](etable7.png)
