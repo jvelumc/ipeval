@@ -1,4 +1,4 @@
-# ipeval 0.2.0
+# ipeval (development version)
 
 * Refactored code to be more readable, reusable and slightly faster.
 * Added support for longitudinal treatments with time-dependent confounding.
