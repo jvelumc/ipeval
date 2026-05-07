@@ -13,16 +13,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/jvelumc/ipeval/blob/v0.1.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/jvelumc/ipeval/blob/master/DESCRIPTION)
 
 van Egeraat J, van Geloven N, Keogh R (2026). *ipeval: Evaluation of
-Interventional Predictions*. R package version 0.1.0,
+Interventional Predictions*. R package version 0.1.0.9000,
 <https://jvelumc.github.io/ipeval/>.
 
     @Manual{,
       title = {ipeval: Evaluation of Interventional Predictions},
       author = {Jasper {van Egeraat} and Nan {van Geloven} and Ruth Keogh},
       year = {2026},
-      note = {R package version 0.1.0},
+      note = {R package version 0.1.0.9000},
       url = {https://jvelumc.github.io/ipeval/},
     }
