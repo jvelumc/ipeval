@@ -1,12 +1,3 @@
-todo
-
-- print when stabilized weights
-- longitudinal trts
-- categorical treatments
-- refactor tests
-- test for outputs
-- multiple censoring mechanisms
-
 
 
 - waarom is attr(outcome$observed, "dimnames") NULL? van long iig.
