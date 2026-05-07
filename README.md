@@ -3,6 +3,8 @@
 
 # ipeval <!-- badges: start -->
 
+[![CRAN
+status](https://www.r-pkg.org/badges/version/ipeval)](https://CRAN.R-project.org/package=ipeval)
 [![R-CMD-check](https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
@@ -21,6 +23,13 @@ plots. Methods implemented in this pacakge are based on work by [Keogh
 and Van Geloven (2024)](https://doi.org/10.1097/EDE.0000000000001713).
 
 ## Installation
+
+ipeval can be installed from
+[CRAN](https://cran.r-project.org/web/packages/ipeval/index.html) with:
+
+``` r
+install.packages("ipeval")
+```
 
 The development version of ipeval can be installed from
 [GitHub](https://github.com/) with:
