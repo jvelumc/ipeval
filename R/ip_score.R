@@ -284,7 +284,6 @@ make_list_if_not_list <- function(x) {
 extract_outcome <- function(data, outcome, time_horizon) {
   # attempt to extract the outcome from the data, and perform various sanity
   # checks
-
   y <- tryCatch(
     eval(outcome, envir = as.list(data), enclos = parent.frame()),
     error = function(e) {

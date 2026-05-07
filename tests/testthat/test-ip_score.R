@@ -19,10 +19,9 @@ test_that("wrong input throws sensible errors", {
 
   # object ------------------------------------------------------------------
   expect_error(
-    ip_score(predictions[1:999], data = my_data, outcome = status, A ~ L, 1),
+    ip_score(predictions[1:(n-1)], data = my_data, outcome = status, A ~ L, 1),
     "Predictions must be of length nrow"
   )
-
   expect_error(
     ip_score(lm(status ~ A, my_data), data = my_data, outcome = status, A ~ L, 1),
     "model class lm not supported"
@@ -40,7 +39,7 @@ test_that("wrong input throws sensible errors", {
   )
 
   expect_error(
-    ip_score(predictions, data = my_data, outcome = data$status[1:999], A ~ L, 1),
+    ip_score(predictions, data = my_data, outcome = data$status[1:(900)], A ~ L, 1),
     "Outcome must be of length"
   )
 
@@ -55,7 +54,9 @@ test_that("wrong input throws sensible errors", {
     "no controls"
   )
 
-  # treatment
+  # treatment ---------------------------------------------------------------
+
+
   expect_error(
     ip_score(predictions, my_data, status, A + B ~ L, 1),
     "treatment formula must be one variable"
@@ -82,8 +83,30 @@ test_that("wrong input throws sensible errors", {
              iptw = runif(n), bootstrap = 50, bootstrap_progress = FALSE),
     "can't bootstrap"
   )
-
 })
+
+test_that("test if assumption output is correct", {
+  n <- 10000
+  df <- data.frame(
+    conf = rnorm(n, mean = 0),
+    prog = rnorm(n, mean = 0)
+  )
+  df$trt <- rbinom(n, 1, plogis(0.2 + 0.5*df$conf))
+  df$out <- rbinom(n, 1, plogis(0.3*df$conf + 0.6*df$prog - 0.5*df$trt))
+
+  pred <- glm(out ~ conf + prog + trt, data = df)
+
+  ips <- ip_score(pred, df, out, trt ~ conf, 1, metrics = c("brier"))
+
+  output <- capture_output_lines(print(ips))
+
+  expect_equal(
+    paste0(output[1:10], collapse = ""),
+    expected <- "Estimation of the performance of the prediction model in a counterfactual (CF) dataset where everyone's treatment trt was set to 1.The following assumptions must be satisfied for correct inference:- Conditional exchangeability requires that the inverse probability of treatment weights are sufficient to adjust for confounding between treatment and outcome.- Conditional positivity (assess $ipt$weights for outliers)- Consistency (including no interference)- Correctly specified propensity model. Estimated treatment model is"
+  )
+})
+
+
 
 test_that("supplying (list of) model or predictions equivalent", {
   set.seed(1)
@@ -546,7 +569,8 @@ test_that("ip_score metrics equal to unobserved CF metrics, surv, KM censor, sta
     cens_model = "KM",
     cens_formula = ~ 1,
     stable_iptw = TRUE,
-    null_model = FALSE
+    null_model = FALSE,
+    metrics = c("auc", "brier", "oeratio")
   )
 
   stable_min <- min(ip_score$ipt$weights)
@@ -586,6 +610,15 @@ test_that("ip_score metrics equal to unobserved CF metrics, surv, KM censor, sta
   expect_equal(unname(ip_score$score$brier), score$Brier$score$Brier, tolerance = 0.01)
   expect_equal(unname(ip_score$score$oeratio), score$oe, tolerance = 0.01)
 
+  # test if console output with all its assumptions work as expected
+
+  output <- capture_output_lines({print(ip_score)})
+  expected <- "Estimation of the performance of the prediction model in a counterfactual (CF) dataset where everyone's treatment A was set to 0.The following assumptions must be satisfied for correct inference:- Conditional exchangeability requires that the inverse probability of treatment weights are sufficient to adjust for confounding between treatment and outcome.- Conditional positivity (assess $ipt$weights for outliers)- Consistency (including no interference)- Correctly specified propensity model. Estimated treatment model is* Stabilized weights were used. See also $ipt$stable_model. Pseudopopulation weights ($ipt$weights) are then probability of treatment from $ipt$stable_model divided by probability of treatment from $ipt$model.- Non-informative censoring. See also $ipc$model for the Kaplan-Meier estimator of the censoring distribution."
+
+  expect_equal(
+    paste0(output[-c(10,18,19)], collapse = ""),
+    expected
+  )
 })
 
 

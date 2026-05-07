@@ -48,7 +48,8 @@ plot.ip_score <- function(x, ...) {
        xlab = "Predicted", ylab = "Observed")
   graphics::title(
     main = "Counterfactual calibration plot",
-    sub = paste0("Calibration plot had everyone followed treatment option ", x$treatment_of_interest),
+    sub = paste0("Calibration plot had everyone followed treatment option ",
+                 x$treatment$treatment_of_interest),
     col.sub = "#404040",
     cex.sub = 0.8
   )
