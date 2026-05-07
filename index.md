@@ -15,7 +15,7 @@ and observed outcomes in the pseudo-population corresponding to that
 intervention. Supports binary and time-to-event outcomes under binary
 interventions made at a single time point. Performance measures
 supported are AUC, Brier score, observed-expected ratio, and calibration
-plots. Methods implemented in this pacakge are based on work by [Keogh
+plots. Methods implemented in this package are based on work by [Keogh
 and Van Geloven (2024)](https://doi.org/10.1097/EDE.0000000000001713).
 
 ## Installation
