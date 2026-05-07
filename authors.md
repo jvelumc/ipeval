@@ -13,7 +13,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/jvelumc/ipeval/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/jvelumc/ipeval/blob/v0.1.0/DESCRIPTION)
 
 van Egeraat J, van Geloven N, Keogh R (2026). *ipeval: Evaluation of
 Interventional Predictions*. R package version 0.1.0,
