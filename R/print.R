@@ -12,7 +12,7 @@ print.ip_score <- function(x, ...) {
   }
   numeric_metrics <- x$metrics[!grepl("^calplot", x$metrics)]
 
-  if (x$bootstrap_iterations != 0) {
+  if (!is.null(x$bootstrap)) {
     for (metric in numeric_metrics) {
       cat("\n", metric, "\n\n", sep = "")
       tab <- data.frame(model = names(x$predictions))
@@ -74,7 +74,7 @@ plot.ip_score <- function(x, ...) {
          lwd    = 1,
          pch    = 1,
          bty    = "n")
-  if (x$bootstrap_iterations > 0) {
+  if (!is.null(x$bootstrap)) {
     for (m in models) {
       plot(1, type = "n",
            xlim = c(0, 1), ylim = c(0, 1),
@@ -117,8 +117,8 @@ plot.ip_score <- function(x, ...) {
 assumptions <- function(x) {
 
   pp("Estimation of the performance of the prediction model in a counterfactual
-     (CF) dataset where everyone's treatment ", x$treatment_column,
-     " was set to ", x$treatment_of_interest, ".")
+     (CF) dataset where everyone's treatment ", x$treatment$treatment_column,
+     " was set to ", x$treatment$treatment_of_interest, ".")
 
   pp("The following assumptions must be satisfied for correct inference:")
 
@@ -137,7 +137,7 @@ assumptions <- function(x) {
     pp("- Correct IPT-weights (as manually specified)")
   }
 
-  if (x$outcome_type == "survival") {
+  if (x$outcome$type == "survival") {
     switch(x$ipc$method,
     KM = pp("- Non-informative censoring. See also $ipc"),
     cox = pp(" - Correctly specified censoring model. Estimated censoring

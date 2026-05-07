@@ -42,19 +42,9 @@
 observed_score <- function(object, data, outcome,
                     metrics = c("auc", "brier", "oeratio", "calplot")) {
 
-  score <- list()
-
-  # get the observed outcome
-  score$outcome <- extract_outcome(data, substitute(outcome))
-  if (inherits(score$outcome, "Surv")) {
-    stop("This function does not support survival data")
-  } else {
-    score$outcome_type <- "binary"
-  }
-
   # make a list of risk predictions
   object <- make_list_if_not_list(object)
-  score$predictions <- lapply(
+  score_predictions <- lapply(
     X = object,
     FUN = function(x) {
       if (is.numeric(x) && is.null(dim(x))) {
@@ -65,18 +55,23 @@ observed_score <- function(object, data, outcome,
     }
   )
 
-  score$ipt$weights <- rep(1, nrow(data))
-  score$observed_treatment <- rep(1, nrow(data))
-  score$treatment_of_interest <- 1
-  score$metrics <- metrics
-  score$score <- get_metrics(score)
-  score$bootstrap_iterations <- 0
-  score$quiet <- TRUE
-  # rearrange such that score is the first entry of the list
-  front <- c("score")
-  score <- score[c(front, setdiff(names(score), front))]
-  class(score) <- "ip_score"
+  # performance of observed data, can be computed by setting everyone's treatment
+  # to the treatment of interest. This way all subjects are used
+  score_trt <- list(
+    "observed" = rep(1, nrow(data)),
+    "treatment_of_interest" = 1
+  )
 
-  return(score)
+  ip_object <- construct_ip_object(
+    outcome = extract_outcome(data, substitute(outcome)),
+    treatment = score_trt,
+    predictions = score_predictions,
+    ipt = list("weights" = rep(1, nrow(data))),
+    ipc = NULL,
+    metrics = metrics
+  )
+  ip_object <- add_to_ip_object(ip_object, "quiet", TRUE)
+  ip_object <- compute_metrics(ip_object)
 
+  return(ip_object)
 }
