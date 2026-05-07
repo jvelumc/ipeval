@@ -19,11 +19,14 @@ discuss
 - null model on survival data?
 
 - moeten visits even ver uit elkaar liggen?
-- als performance time horizon = 5 maar ik heb data tot 10, mag data na t>5
-    gebruikt worden voor fitten (artifical) censoring model?
 - We gaan er nu van uit dat treatment model op elk visit gelijk is. Het is niet
     ondenkbaar dat er voor verschillende visits verschillende treatment modellen
     nodig zijn. Misschien kan dit al, door indicators in treatment model te doen?
 - Zijn de IPT-weights relevant van mensen die niet de treatment of interest hebben?
 - time dependent confounders effect op censoring?
 - null model is dat gewoon weighted mean van outcome in pseudopop?
+- wat is truth als we simuleren dat iedereen treatment krijgt? Omdat L[i] afhangt
+    van A[i-1]. Dus A = 1,1,1,1,1 beinvloed ook L, wat weer survtime beinvloed.
+    daardoor is het null model anders in counterfactual pseudopopulatie anders dan
+    Simuleren we L[i] obv orginele A, en fixen we A dan op een patroon, of
+    simuleren we L[i] obv A = 1,1,1,1,1?
