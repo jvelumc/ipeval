@@ -57,16 +57,19 @@
 <div class="page-header"><h1 id="ipeval-">ipeval <!-- badges: start -->
 <a class="anchor" aria-label="anchor" href="#ipeval-"></a>
 </h1></div>
-<p><a href="https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <!-- badges: end --></p>
+<p><a href="https://CRAN.R-project.org/package=ipeval" class="external-link"><img src="https://www.r-pkg.org/badges/version/ipeval" alt="CRAN status"></a> <a href="https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/jvelumc/ipeval/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <!-- badges: end --></p>
 <p>Provides methods to evaluate predictive performance of models that estimate risks under hypothetical intervention scenarios (interventional/causal/counterfactual predictions) with observational data subject to treatment-outcome confounding. Inverse probability of treatment weighting (IPTW) is used to construct a pseudopopulation in which all individuals receive a specified intervention, enabling assessment of agreement between predicted risks under the intervention and observed outcomes in the pseudo-population corresponding to that intervention. Supports binary and time-to-event outcomes under binary interventions made at a single time point. Performance measures supported are AUC, Brier score, observed-expected ratio, and calibration plots. Methods implemented in this pacakge are based on work by <a href="https://doi.org/10.1097/EDE.0000000000001713" class="external-link">Keogh and Van Geloven (2024)</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>The development version of ipeval can be installed from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>ipeval can be installed from <a href="https://cran.r-project.org/web/packages/ipeval/index.html" class="external-link">CRAN</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"ipeval"</span><span class="op">)</span></span></code></pre></div>
+<p>The development version of ipeval can be installed from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"jvelumc/ipeval"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jvelumc.github.io/ipeval/">ipeval</a></span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -76,7 +79,7 @@
 <p>To develop the interventional prediction model, we first simulate development data for binary outcome <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Y</mi><annotation encoding="application/x-tex">Y</annotation></semantics></math> and point treatment <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math>, with the relation between <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Y</mi><annotation encoding="application/x-tex">Y</annotation></semantics></math> confounded by variable <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>. Variable <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math> is a prognostic variable for only the outcome. The treatment reduces the risk of a bad outcome (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Y</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">Y = 1</annotation></semantics></math>) in this example.</p>
 <figure><img src="reference/figures/dag.png" alt="Figure 1. DAG for toy example"><figcaption aria-hidden="true">
 Figure 1. DAG for toy example
-</figcaption></figure><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+</figcaption></figure><div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">simulate_data</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">seed</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="va">n</span><span class="op">)</span></span>
 <span>  <span class="va">data</span><span class="op">$</span><span class="va">L</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span></span>
@@ -88,7 +91,7 @@ Figure 1. DAG for toy example
 <span></span>
 <span><span class="va">df_dev</span> <span class="op">&lt;-</span> <span class="fu">simulate_data</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">2000</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p>Suppose that the aim is to develop a model for informing whether patients should receive treatment or not, by providing estimates of what their risk would be if they were treated and what it would be if they were untreated. We create two prediction models using the development data, from which such predictions could be obtained. The ‘naive model’ and the ‘causal model’ both include A and P as predictors for Y. However, the ‘naive model’ ignores the confounding by L, and the ‘causal model’ controls for the confounding by L through inverse probability weights. A third ‘model’ just generates predictions randomly.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># naive model, not accounting for confounding variable L</span></span>
 <span><span class="va">naive_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/glm.html" class="external-link">glm</a></span><span class="op">(</span><span class="va">Y</span> <span class="op">~</span> <span class="va">A</span> <span class="op">+</span> <span class="va">P</span>, family <span class="op">=</span> <span class="st">"binomial"</span>, data <span class="op">=</span> <span class="va">df_dev</span><span class="op">)</span></span>
 <span></span>
@@ -100,7 +103,7 @@ Figure 1. DAG for toy example
 <span></span>
 <span><span class="co"># a model that randomly predicts something, not very good probably</span></span>
 <span><span class="va">random_predictions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">5000</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coefficients</a></span><span class="op">(</span><span class="va">naive_model</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; (Intercept)           A           P </span></span>
 <span><span class="co">#&gt;  -0.1088558   0.3407801   1.1878727</span></span>
@@ -109,13 +112,13 @@ Figure 1. DAG for toy example
 <span><span class="co">#&gt;   0.3862409  -0.6863653   1.1949409</span></span></code></pre></div>
 <p>The naive and causal models can generate predictions under treatment (setting <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> to 1) and predictions under no treatment (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> to 0), given values of the predictors <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>P</mi><annotation encoding="application/x-tex">P</annotation></semantics></math>. The estimated coefficient for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> of the naive model is positive due to confounding. As a consequence, the risk under treatment is estimated to be higher than under no treatment, so when this model is used for decision making, no patient should be treated. The causal model, however, correctly infers that treatment benefits patients (as the coefficient for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> is negative).</p>
 <p>We are now interested in how the models perform in an external validation dataset. In this example, the data is simulated in the same way as the development data. In practice, the causal structure in the validation data can be different from the original development data.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df_val</span> <span class="op">&lt;-</span> <span class="fu">simulate_data</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">5000</span>, seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p>For a well performing model, the predictions under treatment should be accurate compared to the outcomes patients would have if they were to be treated. Similarly, the predictions under no treatment should be accurate compared to the outcomes they would have if left untreated. Therefore, the question that we would like to answer is the following:</p>
 <p>How well does our prediction model perform if we were to treat nobody? And if we were to treat everybody?</p>
 <p>The ipeval package aims to provide tools to answer questions like these. The main function <code><a href="reference/ip_score.html">ip_score()</a></code> can be used for this. This function estimates several predictive performance measures in a setting in which all patients were to be given the treatment of interest. The assumptions required for valid inference are printed by default. The first argument of <code><a href="reference/ip_score.html">ip_score()</a></code> is the object to validate. This can be a glm model, a coxph model for survival data, or a numeric vector corresponding to predicted risks under the treatment level of interest for each individual in the validation data. Multiple models can be specified for comparison. Other arguments supplied are the validation data, the observed outcome, a treatment formula for which the left hand side denotes the treatment variable and the right hand side the confounders required to adjust for treatment assignment, and the hypothetical treatment option for which you want to know how well the model performs if everyone in the population was assigned to that treatment.</p>
 <p>If nobody would have been treated:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ip_score.html">ip_score</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    <span class="st">"random"</span> <span class="op">=</span> <span class="va">random_predictions</span>,</span>
@@ -145,7 +148,7 @@ Figure 1. DAG for toy example
 <span><span class="co">#&gt;  causal model 0.766 0.196    1.00</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-7-1.png" width="100%"></p>
 <p>And similarly, we can assess performance if everybody had been treated:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ip_score.html">ip_score</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    <span class="st">"random"</span> <span class="op">=</span> <span class="va">random_predictions</span>,</span>
@@ -172,7 +175,7 @@ Figure 1. DAG for toy example
 <h2 id="traditional-validation">Traditional validation<a class="anchor" aria-label="anchor" href="#traditional-validation"></a>
 </h2>
 <p>In traditional validation studies, it is common to leave the data as it is, and compute the performance metrics on this observed dataset, where some patients were treated and others were not, and treatment assignment is dependent on confounders. For didactic purposes, this package has a convenience function that can do this. Note that we do not specify the treatment level under which predictions are to be made and compared against corresponding outcomes. The resulting performance measures represent performance of the models in a population where some patients were treated and others were not, according to some treatment assignment mechanism present in the validation data.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/observed_score.html">observed_score</a></span><span class="op">(</span></span>
 <span>  object <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    <span class="st">"random"</span> <span class="op">=</span> <span class="va">random_predictions</span>,</span>
