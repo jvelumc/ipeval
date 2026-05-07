@@ -130,16 +130,24 @@ assumptions <- function(x) {
 
   pp("- Consistency (including no interference)")
 
-  if (x$ipt$method == "binomial glm") {
+  if (x$ipt$method %in% c("binomial glm", "stabilized weights")) {
     pp("- Correctly specified propensity model. Estimated treatment model is ",
-       print_model(x$ipt$model), ". See also $ipt$model")
+       print_model(x$ipt$model), ". See also $ipt$model.")
+
+    if (x$ipt$method == "stabilized weights") {
+      pp("* Stabilized weights were used. See also $ipt$stable_model.
+         Pseudopopulation weights ($ipt$weights) are then probability of
+         treatment from $ipt$stable_model divided by probability of treatment
+         from $ipt$model.")
+    }
   } else {
     pp("- Correct IPT-weights (as manually specified)")
   }
 
   if (x$outcome$type == "survival") {
     switch(x$ipc$method,
-    KM = pp("- Non-informative censoring. See also $ipc"),
+    KM = pp("- Non-informative censoring. See also $ipc$model for the
+            Kaplan-Meier estimator of the censoring distribution."),
     cox = pp(" - Correctly specified censoring model. Estimated censoring
       distribution is ", print_censor_model(x$ipc$model), ". See also $ipc"),
     pp("- Correct IPC-weights (as manually specified)")
